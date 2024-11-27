@@ -3,6 +3,7 @@ package controllers
 import (
 	"ApiAyy/app/models"
 	"ApiAyy/pkg/utils"
+	"ApiAyy/platform/database"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -10,11 +11,9 @@ import (
 )
 
 // import (
-//
 
 // 	"github.com/gofiber/fiber/v2"
-//
-//
+
 // 	"github.com/koddr/tutorial-go-fiber-rest-api/platform/database"
 // )
 

@@ -1,9 +1,10 @@
 package queries
 
 import (
+	"ApiAyy/app/models"
+
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
-	"github.com/koddr/tutorial-go-fiber-rest-api/app/models"
 )
 
 // BookQueries struct for queries from Book model.

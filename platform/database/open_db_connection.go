@@ -1,6 +1,6 @@
 package database
 
-import "github.com/koddr/tutorial-go-fiber-rest-api/app/queries"
+import "ApiAyy/app/queries"
 
 // Queries struct for collect all app queries.
 type Queries struct {
