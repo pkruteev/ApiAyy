@@ -5,6 +5,7 @@ import "ApiAyy/app/queries"
 // Queries struct for collect all app queries.
 type Queries struct {
 	*queries.BookQueries // load queries from Book model
+	*queries.UserQueries // load queries from User model
 }
 
 // OpenDBConnection func for opening database connection.
