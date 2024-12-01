@@ -2,7 +2,7 @@ package models
 
 // UserType определяет структуру пользователя
 type UserType struct {
-	UserID         int    `db:"user_id" json:"user_id"`
+	User_ID        int    `db:"user_id" json:"user_id,omitempty"`
 	FirstName      string `db:"first_name" json:"first_name"`
 	PatronymicName string `db:"patronymic_name" json:"patronymic_name,omitempty"`
 	LastName       string `db:"last_name" json:"last_name,omitempty"`
@@ -10,9 +10,16 @@ type UserType struct {
 	UserEmail      string `db:"user_email" json:"user_email"`
 	UserPhone      string `db:"user_phone" json:"user_phone,omitempty"`
 	UserCompany    string `db:"user_company" json:"user_company,omitempty"`
-	Password       string `db:"password" json:"password,omitempty"`
+	Password       string `db:"password" json:"password"`
 }
 
+// type User struct {
+// 	Id        uint   `json:"id"`
+// 	FirstName string `json:"first_name"`
+// 	LastName  string `json:"last_name"`
+// 	Email     string `json:"email" gorm:"unique"`
+// 	Password  []byte `json:"-"`
+// }
 // UserRole определяет роли пользователя
 // type UserRole struct {
 // 	Member   string `json:"member"`

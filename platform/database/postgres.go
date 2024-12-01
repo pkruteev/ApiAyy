@@ -6,33 +6,49 @@ import (
 	"strconv"
 	"time"
 
+	_ "github.com/jackc/pgx/v4/stdlib" // Импортируем драйвер pgx
 	"github.com/jmoiron/sqlx"
-
-	_ "github.com/jackc/pgx/v4/stdlib" // load pgx driver for PostgreSQL
+	"github.com/joho/godotenv"
 )
 
-// PostgreSQLConnection func for connection to PostgreSQL database.
 func PostgreSQLConnection() (*sqlx.DB, error) {
-	// Define database connection settings.
-	maxConn, _ := strconv.Atoi(os.Getenv("DB_MAX_CONNECTIONS"))
-	maxIdleConn, _ := strconv.Atoi(os.Getenv("DB_MAX_IDLE_CONNECTIONS"))
-	maxLifetimeConn, _ := strconv.Atoi(os.Getenv("DB_MAX_LIFETIME_CONNECTIONS"))
-
-	// Define database connection for PostgreSQL.
-	db, err := sqlx.Connect("pgx", os.Getenv("DB_SERVER_URL"))
+	// Загружаем переменные окружения из файла .env
+	err := godotenv.Load()
 	if err != nil {
-		return nil, fmt.Errorf("error, not connected to database, %w", err)
+		return nil, fmt.Errorf("ошибка загрузки файла .env, %w", err)
 	}
 
-	// Set database connection settings.
-	db.SetMaxOpenConns(maxConn)                           // the default is 0 (unlimited)
-	db.SetMaxIdleConns(maxIdleConn)                       // defaultMaxIdleConns = 2
-	db.SetConnMaxLifetime(time.Duration(maxLifetimeConn)) // 0, connections are reused forever
+	// Определяем параметры подключения к базе данных.
+	maxConn, err := strconv.Atoi(os.Getenv("DB_MAX_CONNECTIONS"))
+	if err != nil {
+		return nil, fmt.Errorf("ошибка при преобразовании DB_MAX_CONNECTIONS, %w", err)
+	}
 
-	// Try to ping database.
+	maxIdleConn, err := strconv.Atoi(os.Getenv("DB_MAX_IDLE_CONNECTIONS"))
+	if err != nil {
+		return nil, fmt.Errorf("ошибка при преобразовании DB_MAX_IDLE_CONNECTIONS, %w", err)
+	}
+
+	maxLifetimeConn, err := strconv.Atoi(os.Getenv("DB_MAX_LIFETIME_CONNECTIONS"))
+	if err != nil {
+		return nil, fmt.Errorf("ошибка при преобразовании DB_MAX_LIFETIME_CONNECTIONS, %w", err)
+	}
+
+	// Подключаемся к базе данных PostgreSQL.
+	db, err := sqlx.Connect("pgx", os.Getenv("DB_SERVER_URL"))
+	if err != nil {
+		return nil, fmt.Errorf("ошибка, не удалось подключиться к базе данных, %w", err)
+	}
+
+	// Устанавливаем параметры подключения к базе данных.
+	db.SetMaxOpenConns(maxConn)                           // по умолчанию 0 (неограниченно)
+	db.SetMaxIdleConns(maxIdleConn)                       // по умолчанию 2
+	db.SetConnMaxLifetime(time.Duration(maxLifetimeConn)) // 0, соединения повторно используются навсегда
+
+	// Пытаемся отправить запрос ping к базе данных.
 	if err := db.Ping(); err != nil {
-		defer db.Close() // close database connection
-		return nil, fmt.Errorf("error, not sent ping to database, %w", err)
+		defer db.Close() // закрываем подключение к базе данных
+		return nil, fmt.Errorf("ошибка ping, не удалось отправить ping к базе данных, %w", err)
 	}
 
 	return db, nil

@@ -12,11 +12,14 @@ func PublicRoutes(a *fiber.App) {
 	route := a.Group("/api")
 
 	// Routes for GET method:
-	route.Get("/books", controllers.GetBooks)              // get list of all books
-	route.Get("/book/:id", controllers.GetBook)            // get one book by ID
-	route.Get("/token/new", controllers.GetNewAccessToken) // create a new access tokens
 
-	// Route for user registration
-	route.Post("/register", controllers.RegisterUser)
+	route.Post("/register", controllers.Register)
 
+	route.Get("/health", func(c *fiber.Ctx) error {
+		return c.JSON(fiber.Map{
+			"status":  "OK",
+			"service": "AYY api",
+			"version": "1.0.0",
+		})
+	})
 }
