@@ -9,11 +9,10 @@ import (
 
 // Список пар "название таблицы" - "путь к SQL файлу".
 var tables = map[string]string{
-	// "books":       "migrations/000001_create_books_table.up.sql",
-	// "users":       "migrations/000002_create_users_table.up.sql",
-	// "company": "migrations/000003_create_companies_table.up.sql",
+
+	"users": "platform/migrations/000001_create_users_table.up.sql",
+
 	"company": "platform/migrations/000003_create_companies_table.up.sql",
-	// "contragency": "migrations/000004_create_contragency_table.up.sql",
 }
 
 // CreateTables создает все таблицы из списка.

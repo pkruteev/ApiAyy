@@ -32,8 +32,6 @@ func Register(c *fiber.Ctx) error {
 	// Устанавливаем зашифрованный пароль как строку
 	user.Password = string(hashedPassword)
 
-	fmt.Printf("Созданный пользователь: %+v\n", user) // Выводим в консоль в формате структуры
-
 	// Создаем соединение с базой данных.
 	db, err := database.OpenDBConnection()
 	if err != nil {
@@ -51,13 +49,37 @@ func Register(c *fiber.Ctx) error {
 			"msg":   "Ошибка сохранения пользователя в БД: " + err.Error(),
 		})
 	}
+
+	// Получаем пользователя из базы данных по email.
+	createdUser, err := db.GetUserByUserEmail(user.UserEmail)
+	if err != nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": true,
+			"msg":   "Неправильный логин или пароль",
+		})
+	}
+
+	// Получаем идентификатор нового пользователя
+	userID := user.User_ID
+
+	// Генерация JWT токена
+	token, err := GetNewAccessToken(userID) // Передаем userID в функцию
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": true,
+			"msg":   "Ошибка генерации токена: " + err.Error(),
+		})
+	}
+
 	// Удаляем пароль из ответа
-	user.Password = ""
+	createdUser.Password = ""
+	fmt.Printf("Созданный пользователь: %+v\n", createdUser)
 
 	// Возвращаем статус 200 OK.
 	return c.JSON(fiber.Map{
 		"error": false,
 		"msg":   "User registered successfully",
-		"user":  user,
+		"token": token,
+		"user":  createdUser,
 	})
 }

@@ -11,9 +11,13 @@ func PublicRoutes(a *fiber.App) {
 	// Create routes group.
 	route := a.Group("/api")
 
-	// Routes for GET method:
-
+	route.Post("/login", controllers.Login)
 	route.Post("/register", controllers.Register)
+
+	// JWT Middleware
+	// app.Use(jwtware.New(jwtware.Config{
+	// 	SigningKey: jwtware.SigningKey{Key: []byte("secret")},
+	// }))
 
 	route.Get("/health", func(c *fiber.Ctx) error {
 		return c.JSON(fiber.Map{
