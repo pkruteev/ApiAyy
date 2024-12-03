@@ -5,7 +5,9 @@ import (
 	"ApiAyy/pkg/middleware"
 	"ApiAyy/pkg/routes"
 	"ApiAyy/pkg/utils"
+	"ApiAyy/platform/database"
 	"fmt"
+	"log"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -20,17 +22,16 @@ func main() {
 	// Middlewares.
 	middleware.FiberMiddleware(app)
 
-	// // Подключение к базе данных
-	// db, err := database.OpenDBConnection()
-	// if err != nil {
-	// 	// Return status 500 and database connection error.
-	// 	return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-	// 		"error": true,
-	// 		"msg":   err.Error(),
-	// 	})
-	// }
+	// Подключение к базе данных
+	db, err := database.PostgreSQLConnection()
+	if err != nil {
+		log.Fatalf("Ошибка подключения к базе данных: %v", err)
+	}
 
-	fmt.Println("Connection pool created successfully.")
+	// Вызов функции для создания таблиц если не созданы
+	database.CreateTables(db)
+
+	fmt.Println("Пул соединений успешно создан.")
 
 	// Routes.
 	// В случае, если вам нужно использовать объект db в маршрутах, передайте его в маршруты
