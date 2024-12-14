@@ -6,6 +6,7 @@ import "ApiAyy/app/queries"
 type Queries struct {
 	// *queries.BookQueries // load queries from Book model
 	*queries.UserQueries
+	*queries.CompanyQueries
 }
 
 // OpenDBConnection func for opening database connection.
@@ -18,7 +19,8 @@ func OpenDBConnection() (*Queries, error) {
 
 	return &Queries{
 		// Set queries from models:
-		UserQueries: &queries.UserQueries{DB: db}, // from User model
+		UserQueries:    &queries.UserQueries{DB: db},    // from User model
+		CompanyQueries: &queries.CompanyQueries{DB: db}, // from Company model
 	}, nil
 
 	// return &Queries{
