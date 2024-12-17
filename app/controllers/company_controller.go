@@ -23,7 +23,7 @@ func CreateCompany(c *fiber.Ctx) error {
 		})
 	}
 
-	// Set expiration time from JWT data of current book.
+	// Set expiration time from JWT data of current company.
 	expires := claims.Expires
 
 	// Checking, if now time greater than expiration from JWT.

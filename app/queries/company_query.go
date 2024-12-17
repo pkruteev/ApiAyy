@@ -52,10 +52,10 @@ func (q *CompanyQueries) GetCompany(id_company uint) (models.Company, error) {
 func (q *CompanyQueries) CreateCompany(b *models.Company) error {
 
 	// Определите строку запроса, исключив поле USER_ID.
-	query := "INSERT INTO company (created_at, status_company, company_name, inn, kpp, ogrn, ur_adress, mail_adress, bank_name, bank_bic, bank_k_schet, r_schet, phone, email, director) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)"
+	query := "INSERT INTO company (created_at, status_company, company_name, inn, kpp, ogrn, ur_adress, mail_adress, bank_name, bank_bic, kor_schet, r_schet, phone, email, director) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)"
 
 	// Отправьте запрос в базу данных.
-	_, err := q.Exec(query, b.Id_company, b.CreatedAt, b.Status_company, b.Company_name, b.Inn, b.Kpp, b.Ogrn, b.Ur_adress, b.Mail_adress, b.Bank_name, b.Bank_bic, b.Kor_schet, b.R_schet, b.Phone, b.Email, b.Director)
+	_, err := q.Exec(query, b.CreatedAt, b.Status_company, b.Company_name, b.Inn, b.Kpp, b.Ogrn, b.Ur_adress, b.Mail_adress, b.Bank_name, b.Bank_bic, b.Kor_schet, b.R_schet, b.Phone, b.Email, b.Director)
 	if err != nil {
 		// Return only error.
 		return err
