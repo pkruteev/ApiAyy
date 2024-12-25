@@ -33,7 +33,7 @@ func Register(c *fiber.Ctx) error {
 	user.Password = string(hashedPassword)
 
 	// Создаем соединение с базой данных.
-	db, err := database.OpenDBConnection()
+	db_main, err := database.OpenDBConnection()
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": true,
@@ -42,7 +42,7 @@ func Register(c *fiber.Ctx) error {
 	}
 
 	// Сохраняем пользователя в базе данных
-	err = db.RegisterUser(user)
+	err = db_main.RegisterUser(user)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": true,
@@ -51,7 +51,7 @@ func Register(c *fiber.Ctx) error {
 	}
 
 	// Получаем пользователя из базы данных по email.
-	createdUser, err := db.GetUserByUserEmail(user.UserEmail)
+	createdUser, err := db_main.GetUserByUserEmail(user.UserEmail)
 	if err != nil {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": true,

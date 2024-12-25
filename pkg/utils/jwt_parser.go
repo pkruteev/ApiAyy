@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"fmt"
 	"os"
 	"strings"
 
@@ -11,6 +12,7 @@ import (
 // TokenMetadata struct to describe metadata in JWT.
 type TokenMetadata struct {
 	Expires int64
+	UserId  float64
 }
 
 // ExtractTokenMetadata func to extract metadata from JWT.
@@ -23,11 +25,20 @@ func ExtractTokenMetadata(c *fiber.Ctx) (*TokenMetadata, error) {
 	// Setting and checking token and credentials.
 	claims, ok := token.Claims.(jwt.MapClaims)
 	if ok && token.Valid {
+		// fmt.Println("Claims:", claims)
+
+		// Извлечение user_id из claims
+		userId := claims["user_id"].(float64)
+
+		// Вывод значения user_id в терминал
+		fmt.Printf("Extracted user_id: %.0f\n", userId)
+
 		// Expires time.
 		expires := int64(claims["exp"].(float64))
 
 		return &TokenMetadata{
 			Expires: expires,
+			UserId:  userId, // Вы можете добавить это поле в TokenMetadata, если нужно
 		}, nil
 	}
 

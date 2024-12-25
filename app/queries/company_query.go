@@ -30,7 +30,7 @@ type CompanyQueries struct {
 // }
 
 // GetCompany method for getting one company by given ID.
-func (q *CompanyQueries) GetCompany(id_company uint) (models.Company, error) {
+func (q *CompanyQueries) GetCompany(company_id uint) (models.Company, error) {
 	// Define company variable.
 	company := models.Company{}
 
@@ -38,7 +38,7 @@ func (q *CompanyQueries) GetCompany(id_company uint) (models.Company, error) {
 	query := `SELECT * FROM company WHERE id_company = $1`
 
 	// Send query to database.
-	err := q.Get(&company, query, id_company)
+	err := q.Get(&company, query, company_id)
 	if err != nil {
 		// Return empty object and error.
 		return company, err
@@ -52,10 +52,10 @@ func (q *CompanyQueries) GetCompany(id_company uint) (models.Company, error) {
 func (q *CompanyQueries) CreateCompany(b *models.Company) error {
 
 	// Определите строку запроса, исключив поле USER_ID.
-	query := "INSERT INTO company (created_at, status_company, company_name, inn, kpp, ogrn, ur_adress, mail_adress, bank_name, bank_bic, kor_schet, r_schet, phone, email, director) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)"
+	query := "INSERT INTO company (created_at, status_company, company_name, inn, kpp, ogrn, ur_adress, mail_adress, phone, email, director) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)"
 
 	// Отправьте запрос в базу данных.
-	_, err := q.Exec(query, b.CreatedAt, b.Status_company, b.Company_name, b.Inn, b.Kpp, b.Ogrn, b.Ur_adress, b.Mail_adress, b.Bank_name, b.Bank_bic, b.Kor_schet, b.R_schet, b.Phone, b.Email, b.Director)
+	_, err := q.Exec(query, b.CreatedAt, b.Status_company, b.Company_name, b.Inn, b.Kpp, b.Ogrn, b.Ur_adress, b.Mail_adress, b.Phone, b.Email, b.Director)
 	if err != nil {
 		// Return only error.
 		return err
@@ -67,10 +67,10 @@ func (q *CompanyQueries) CreateCompany(b *models.Company) error {
 // UpdateCompany method for updating company by given Company object.
 func (q *CompanyQueries) UpdateCompany(company_id, b *models.Company) error {
 	// Define query string.
-	query := `UPDATE company SET status_company = $2, company_name = $3, inn = $4, kpp = $5, ogrn = $6, ur_adress = $7, mail_adress = $8, bank_name = $9, bank_bic = $10, kor_schet = $11, r_schet = $12, phone = $13, email = $14, director = $15 WHERE company_id = $1`
+	query := `UPDATE company SET status_company = $2, company_name = $3, inn = $4, kpp = $5, ogrn = $6, ur_adress = $7, mail_adress = $8, phone = $9, email = $10, director = $11 WHERE company_id = $1`
 
 	// Send query to database.
-	_, err := q.Exec(query, b.Id_company, b.Status_company, b.Company_name, b.Inn, b.Kpp, b.Ogrn, b.Ur_adress, b.Mail_adress, b.Bank_name, b.Bank_bic, b.Kor_schet, b.R_schet, b.Phone, b.Email, b.Director)
+	_, err := q.Exec(query, b.Company_Id, b.Status_company, b.Company_name, b.Inn, b.Kpp, b.Ogrn, b.Ur_adress, b.Mail_adress, b.Phone, b.Email, b.Director)
 	if err != nil {
 		// Return only error.
 		return err

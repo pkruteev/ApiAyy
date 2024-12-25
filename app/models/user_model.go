@@ -12,7 +12,6 @@ type UserType struct {
 	UserRole       string    `db:"user_role" json:"user_role,omitempty"`
 	UserEmail      string    `db:"user_email" json:"user_email"`
 	UserPhone      string    `db:"user_phone" json:"user_phone,omitempty"`
-	UserCompany    string    `db:"user_company" json:"user_company,omitempty"`
 	Password       string    `db:"password" json:"password"`
 }
 

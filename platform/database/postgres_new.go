@@ -11,7 +11,8 @@ import (
 	"github.com/joho/godotenv"
 )
 
-func PostgreSQLConnection() (*sqlx.DB, error) {
+// PostgreNewSQLConnection создает подключение к базе данных PostgreSQL с заданным user_id.
+func PostgreNewSQLConnection(userId string) (*sqlx.DB, error) {
 	// Загружаем переменные окружения из файла .env
 	err := godotenv.Load()
 	if err != nil {
@@ -33,23 +34,36 @@ func PostgreSQLConnection() (*sqlx.DB, error) {
 	if err != nil {
 		return nil, fmt.Errorf("ошибка при преобразовании DB_MAX_LIFETIME_CONNECTIONS, %w", err)
 	}
+	// ////////
+	// Получаем настройку из файла ENV
+	dbConfig := os.Getenv("DB_NEW_SERVER_URL")
+
+	// Находим имя базы данных по userId
+	dbname := fmt.Sprintf("dbname=%s", userId)
+
+	// Формируем URL для подключения
+	dbURL := fmt.Sprintf("%s %s", dbConfig, dbname)
+
+	////////
+	// Формируем URL для подключения к конкретной базе данных по user_id
+	// dbURL := fmt.Sprintf("%s/%s", os.Getenv("DB_NEW_SERVER_URL"), userId)
 
 	// Подключаемся к базе данных PostgreSQL.
-	db_main, err := sqlx.Connect("pgx", os.Getenv("DB_SERVER_URL"))
+	db_new, err := sqlx.Connect("pgx", dbURL)
 	if err != nil {
 		return nil, fmt.Errorf("ошибка, не удалось подключиться к базе данных, %w", err)
 	}
 
 	// Устанавливаем параметры подключения к базе данных.
-	db_main.SetMaxOpenConns(maxConn)                           // по умолчанию 0 (неограниченно)
-	db_main.SetMaxIdleConns(maxIdleConn)                       // по умолчанию 2
-	db_main.SetConnMaxLifetime(time.Duration(maxLifetimeConn)) // 0, соединения повторно используются навсегда
+	db_new.SetMaxOpenConns(maxConn)                           // по умолчанию 0 (неограниченно)
+	db_new.SetMaxIdleConns(maxIdleConn)                       // по умолчанию 2
+	db_new.SetConnMaxLifetime(time.Duration(maxLifetimeConn)) // 0, соединения повторно используются навсегда
 
 	// Пытаемся отправить запрос ping к базе данных.
-	if err := db_main.Ping(); err != nil {
-		defer db_main.Close() // закрываем подключение к базе данных
+	if err := db_new.Ping(); err != nil {
+		defer db_new.Close() // закрываем подключение к базе данных
 		return nil, fmt.Errorf("ошибка ping, не удалось отправить ping к базе данных, %w", err)
 	}
 
-	return db_main, nil
+	return db_new, nil
 }

@@ -12,15 +12,15 @@ type Queries struct {
 // OpenDBConnection func for opening database connection.
 func OpenDBConnection() (*Queries, error) {
 	// Define a new PostgreSQL connection.
-	db, err := PostgreSQLConnection()
+	db_main, err := PostgreSQLConnection()
 	if err != nil {
 		return nil, err
 	}
 
 	return &Queries{
 		// Set queries from models:
-		UserQueries:    &queries.UserQueries{DB: db},    // from User model
-		CompanyQueries: &queries.CompanyQueries{DB: db}, // from Company model
+		UserQueries:    &queries.UserQueries{DB: db_main},    // from User model
+		CompanyQueries: &queries.CompanyQueries{DB: db_main}, // from Company model
 	}, nil
 
 	// return &Queries{

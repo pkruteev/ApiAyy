@@ -14,10 +14,10 @@ type UserQueries struct {
 func (q *UserQueries) RegisterUser(b *models.UserType) error {
 
 	// Определите строку запроса, исключив поле USER_ID.
-	query := "INSERT INTO users (first_name, patronymic_name, last_name, user_email, user_phone, user_company, password) VALUES ($1, $2, $3, $4, $5, $6, $7)"
+	query := "INSERT INTO users (first_name, patronymic_name, last_name, user_email, user_phone, password) VALUES ($1, $2, $3, $4, $5, $6)"
 
 	// Отправьте запрос в базу данных.
-	_, err := q.Exec(query, b.FirstName, b.PatronymicName, b.LastName, b.UserEmail, b.UserPhone, b.UserCompany, b.Password)
+	_, err := q.Exec(query, b.FirstName, b.PatronymicName, b.LastName, b.UserEmail, b.UserPhone, b.Password)
 	if err != nil {
 		// Верните только ошибку.
 		return err

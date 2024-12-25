@@ -28,7 +28,6 @@ CREATE TABLE IF NOT EXISTS public.users
     user_role user_role_enum NOT NULL DEFAULT 'member',
     user_email character varying(50) NOT NULL,
     user_phone character varying(20),
-    user_company character varying(255),
     password character varying(255) NOT NULL,
     CONSTRAINT users_pkey PRIMARY KEY (user_id)
 )
