@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS public.companies
         (
             company_id       integer NOT NULL DEFAULT nextval('companies_company_id_seq'::regclass),
             created_at       TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-            status_company   character varying(55) NOT NULL,
+            company_status   character varying(55) NOT NULL,
             company_name     character varying(255),
             inn              character varying(55) NOT NULL,
             kpp              character varying(55),

@@ -59,8 +59,6 @@ func AfterPay(c *fiber.Ctx) error {
 		return err
 	}
 
-	// Подключение к новой базе данных PostgreNewSQLConnection
-
 	// Подключение к новой базе данных
 	db_new, err := database.PostgreNewSQLConnection(userId)
 	if err != nil {

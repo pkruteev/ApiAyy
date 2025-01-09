@@ -11,7 +11,8 @@ import (
 	"github.com/joho/godotenv"
 )
 
-func PostgreSQLConnection() (*sqlx.DB, error) {
+// PostgreNewSQLConnection создает подключение к базе данных PostgreSQL
+func DBConnection(db_name string) (*sqlx.DB, error) {
 	// Загружаем переменные окружения из файла .env
 	err := godotenv.Load()
 	if err != nil {
@@ -34,22 +35,31 @@ func PostgreSQLConnection() (*sqlx.DB, error) {
 		return nil, fmt.Errorf("ошибка при преобразовании DB_MAX_LIFETIME_CONNECTIONS, %w", err)
 	}
 
-	// Подключаемся к базе данных PostgreSQL.
-	db_main, err := sqlx.Connect("pgx", os.Getenv("DB_SERVER_URL"))
+	// Получаем настройку из файла ENV
+	dbConfig := os.Getenv("DB_NEW_SERVER_URL")
+
+	// Находим имя базы данных
+	dbname := fmt.Sprintf("dbname=%s", db_name)
+
+	// Формируем URL для подключения
+	dbURL := fmt.Sprintf("%s %s", dbConfig, dbname)
+
+	// Подключаемся к бд
+	db_new, err := sqlx.Connect("pgx", dbURL)
 	if err != nil {
 		return nil, fmt.Errorf("ошибка, не удалось подключиться к базе данных, %w", err)
 	}
 
 	// Устанавливаем параметры подключения к базе данных.
-	db_main.SetMaxOpenConns(maxConn)                           // по умолчанию 0 (неограниченно)
-	db_main.SetMaxIdleConns(maxIdleConn)                       // по умолчанию 2
-	db_main.SetConnMaxLifetime(time.Duration(maxLifetimeConn)) // 0, соединения повторно используются навсегда
+	db_new.SetMaxOpenConns(maxConn)                           // по умолчанию 0 (неограниченно)
+	db_new.SetMaxIdleConns(maxIdleConn)                       // по умолчанию 2
+	db_new.SetConnMaxLifetime(time.Duration(maxLifetimeConn)) // 0, соединения повторно используются навсегда
 
 	// Пытаемся отправить запрос ping к базе данных.
-	if err := db_main.Ping(); err != nil {
-		defer db_main.Close() // закрываем подключение к базе данных
+	if err := db_new.Ping(); err != nil {
+		defer db_new.Close() // закрываем подключение к базе данных
 		return nil, fmt.Errorf("ошибка ping, не удалось отправить ping к базе данных, %w", err)
 	}
 
-	return db_main, nil
+	return db_new, nil
 }

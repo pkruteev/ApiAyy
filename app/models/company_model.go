@@ -5,7 +5,7 @@ import "time"
 type Company struct {
 	Company_Id     uint      `db:"company_id"      json:"company_id"`
 	CreatedAt      time.Time `db:"created_at"      json:"created_at"`
-	Status_company string    `db:"status_company"  json:"status"`
+	Company_status string    `db:"company_status"  json:"company_status"`
 	Company_name   string    `db:"company_name"    json:"company_name"`
 	Inn            string    `db:"inn"             json:"inn"`
 	Kpp            string    `db:"kpp"             json:"kpp"`

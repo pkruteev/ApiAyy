@@ -4,6 +4,7 @@ import (
 	"ApiAyy/app/models"
 	"ApiAyy/platform/database"
 	"fmt"
+	"log"
 
 	"github.com/gofiber/fiber/v2"
 	"golang.org/x/crypto/bcrypt"
@@ -22,17 +23,24 @@ func Login(c *fiber.Ctx) error {
 	fmt.Printf("Parsed loginData: %+v\n", loginData) // Логируем содержимое loginData
 
 	// Подключаемся к бд.
-	db, err := database.OpenDBConnection()
+	// db, err := database.OpenDBConnection()
+	// if err != nil {
+	// 	return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+	// 		"error": true,
+	// 		"msg":   err.Error(),
+	// 	})
+	// }
+
+	// Подключение к базе данных main
+	queries, err := database.DBMainConnection()
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": true,
-			"msg":   err.Error(),
-		})
+		log.Fatalf("Ошибка подключения к базе данных: %v", err)
 	}
+
 	// Получаем пользователя из базы данных по email.
 
-	//////////////////
-	user, err := db.GetUserByUserEmail(loginData.UserEmail)
+	//////////////////DBMainConnection()
+	user, err := queries.GetUserByEmail(loginData.UserEmail)
 	if err != nil {
 		fmt.Println("Пользователь не найден по данному email:", loginData.UserEmail)
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{

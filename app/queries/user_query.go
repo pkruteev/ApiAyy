@@ -2,6 +2,7 @@ package queries
 
 import (
 	"ApiAyy/app/models"
+	"fmt"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -26,20 +27,75 @@ func (q *UserQueries) RegisterUser(b *models.UserType) error {
 	return nil
 }
 
-func (q *UserQueries) GetUserByUserEmail(UserEmail string) (models.UserType, error) {
+func (q *UserQueries) SetupMember(id uint) error {
+
+	const User_Right = "member"
+
+	query := "INSERT INTO rights (user_id, user_right) VALUES ($1, $2)"
+	fmt.Println(id, User_Right)
+
+	// Отправьте запрос в базу данных.
+	_, err := q.Exec(query, id, User_Right)
+	if err != nil {
+		// Верните только ошибку.
+		return err
+	}
+
+	return nil
+}
+
+func (q *UserQueries) SetupAdmin(id uint) error {
+
+	const User_Right = "admin"
+
+	query := "INSERT INTO rights (user_id, user_right) VALUES ($1, $2)"
+	fmt.Println(id, User_Right)
+
+	// Отправьте запрос в базу данных.
+	_, err := q.Exec(query, id, User_Right)
+	if err != nil {
+		// Верните только ошибку.
+		return err
+	}
+
+	return nil
+}
+
+func (q *UserQueries) GetUserByEmail(UserEmail string) (models.UserType, error) {
+	// fmt.Println(UserEmail)
+
 	// Определяем переменную для хранения пользователя.
 	user := models.UserType{}
 
 	// Определяем строку запроса.
 	query := "SELECT * FROM users WHERE user_email = $1"
 
-	// Отправляем запрос к базе данных.
+	// Используйте QueryRow для получения строки.
+
 	err := q.Get(&user, query, UserEmail)
 	if err != nil {
-		// Возвращаем пустой объект и ошибку, если пользователь не найден или произошла ошибка.
+		// Возвращаем пустой объект и ошибку.
 		return user, err
 	}
 
 	// Возвращаем результат запроса.
 	return user, nil
+}
+
+func (q *UserQueries) GetUserRightByID(userID uint) (string, error) {
+	// Определяем переменную для хранения прав пользователя.
+	var userRight string
+
+	// Определяем строку запроса.
+	query := "SELECT user_right FROM rights WHERE user_id = $1"
+
+	// Используйте QueryRow для получения строки.
+	err := q.QueryRow(query, userID).Scan(&userRight) // Используйте Scan для извлечения значения
+
+	// Проверка на наличие ошибки
+	if err != nil {
+		return "", err // Возвращаем пустую строку и ошибку
+	}
+
+	return userRight, nil // Возвращаем права пользователя и nil как ошибку
 }
