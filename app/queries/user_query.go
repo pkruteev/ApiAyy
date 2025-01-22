@@ -44,18 +44,34 @@ func (q *UserQueries) SetupMember(id uint) error {
 	return nil
 }
 
-func (q *UserQueries) SetupAdmin(id uint) error {
+func (q *UserQueries) SetupUserRight(id uint, right string, userCompany uint) error {
 
-	const User_Right = "admin"
+	// Устанавливаем поле user_company в id, если право равно "admin", иначе используем переданное значение
+	// if right == "admin" {
+	// 	userCompany = id
+	// }
 
-	query := "INSERT INTO rights (user_id, user_right) VALUES ($1, $2)"
-	fmt.Println(id, User_Right)
+	query := "INSERT INTO rights (user_id, user_right, user_company) VALUES ($1, $2, $3)"
 
-	// Отправьте запрос в базу данных.
-	_, err := q.Exec(query, id, User_Right)
+	// Выводим пользовательские данные в консоль для отладки.
+	fmt.Println("User ID:", id, "Right:", right, "User Company:", userCompany)
+
+	// Проверка на дублирующую запись по всем параметрам
+	existsQuery := "SELECT COUNT(*) FROM rights WHERE user_id = $1 AND user_right = $2 AND user_company = $3"
+	var count int
+	err := q.QueryRow(existsQuery, id, right, userCompany).Scan(&count)
 	if err != nil {
-		// Верните только ошибку.
-		return err
+		return fmt.Errorf("ошибка проверки существования записи: %w", err)
+	}
+
+	if count > 0 {
+		return fmt.Errorf("пользователь с ID %d уже имеет необходимые права: %s для компании: %d", id, right, userCompany) // Обновлено сообщение об ошибке
+	}
+
+	// Выполняем запрос в базу данных.
+	_, err = q.Exec(query, id, right, userCompany)
+	if err != nil {
+		return fmt.Errorf("ошибка при установке прав пользователя: %w", err)
 	}
 
 	return nil

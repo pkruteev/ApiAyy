@@ -6,6 +6,8 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+// (userId string, db_main *database.Queries)
+// func CreateDB(userId string, db_main *sqlx.DB) error {
 func CreateDB(userId string, db_main *sqlx.DB) error {
 	var exists bool
 	checkQuery := "SELECT EXISTS(SELECT 1 FROM pg_catalog.pg_database WHERE datname = $1);"

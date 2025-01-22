@@ -34,14 +34,6 @@ func Register(c *fiber.Ctx) error {
 	user.Password = string(hashedPassword)
 
 	//Создаем соединение с базой данных.
-	// db_main, err := database.OpenDBConnection()
-	// if err != nil {
-	// 	return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-	// 		"error": true,
-	// 		"msg":   err.Error(),
-	// 	})
-	// }
-
 	db_main, err := database.DBMainConnection()
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -67,18 +59,18 @@ func Register(c *fiber.Ctx) error {
 			"msg":   "Не удалось получить пользователя из БД после сохранения",
 		})
 	}
-	fmt.Println(createdUser)
+	// fmt.Println(createdUser)
 	// Получаем идентификатор нового пользователя
 	userID := createdUser.User_ID // Теперь используем полученного пользователя
 
 	// Записываем пользовательские права memeber в БД.
-	err = db_main.SetupMember(userID)
-	if err != nil {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"error": true,
-			"msg":   "Не удалось сохранить в БД статус MEMBER!",
-		})
-	}
+	// err = db_main.SetupMember(userID)
+	// if err != nil {
+	// 	return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+	// 		"error": true,
+	// 		"msg":   "Не удалось сохранить в БД статус MEMBER!",
+	// 	})
+	// }
 
 	// Генерация JWT токена
 	token, err := GetNewAccessToken(userID) // Передаем userID в функцию
@@ -89,18 +81,18 @@ func Register(c *fiber.Ctx) error {
 		})
 	}
 	// Получаем статус пользователя из БД
-	rightsUser, err := db_main.GetUserRightByID(userID)
-	if err != nil {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"error": true,
-			"msg":   "Не удалось получить пользователя из БД после сохранения",
-		})
-	}
+	// rightsUser, err := db_main.GetUserRightByID(userID)
+	// if err != nil {
+	// 	return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+	// 		"error": true,
+	// 		"msg":   "Не удалось получить пользователя из БД после сохранения",
+	// 	})
+	// }
 	// Удаляем пароль из ответа
 	createdUser.Password = ""
 
 	// Добавляем права пользователя
-	createdUser.User_Right = rightsUser
+	// createdUser.User_Right = rightsUser
 
 	fmt.Printf("Созданный пользователь: %+v\n", createdUser)
 

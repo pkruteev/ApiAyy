@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS public.contracts
             CONSTRAINT pkey_contract_id PRIMARY KEY (contract_id),
             CONSTRAINT fk_object_id FOREIGN KEY (object_id) REFERENCES public.objects(object_id),
             CONSTRAINT fk_company_id FOREIGN KEY (company_id) REFERENCES public.companies(company_id),
-            CONSTRAINT fk_contragency_id FOREIGN KEY (contragency_id) REFERENCES public.contragencies(contragency_id),
+            CONSTRAINT fk_contragency_id FOREIGN KEY (contragency_id) REFERENCES public.contragencies(contragency_id)
         )
 TABLESPACE pg_default;
 

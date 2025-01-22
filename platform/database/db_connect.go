@@ -11,7 +11,7 @@ import (
 	"github.com/joho/godotenv"
 )
 
-// PostgreNewSQLConnection создает подключение к базе данных PostgreSQL
+// Cоздает подключение к базе данных PostgreSQL
 func DBConnection(db_name string) (*sqlx.DB, error) {
 	// Загружаем переменные окружения из файла .env
 	err := godotenv.Load()
