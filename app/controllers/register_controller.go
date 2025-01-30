@@ -20,7 +20,7 @@ func Register(c *fiber.Ctx) error {
 			"msg":   err.Error(),
 		})
 	}
-	// fmt.Println(user)
+
 	// Шифруем пароль пользователя
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
@@ -33,8 +33,8 @@ func Register(c *fiber.Ctx) error {
 	// Устанавливаем зашифрованный пароль как строку
 	user.Password = string(hashedPassword)
 
-	//Создаем соединение с базой данных.
-	db_main, err := database.DBMainConnection()
+	//Создаем соединение с базой данных main.
+	db_main, err := database.DBConnectionQueries("main")
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": true,
@@ -59,18 +59,9 @@ func Register(c *fiber.Ctx) error {
 			"msg":   "Не удалось получить пользователя из БД после сохранения",
 		})
 	}
-	// fmt.Println(createdUser)
-	// Получаем идентификатор нового пользователя
-	userID := createdUser.User_ID // Теперь используем полученного пользователя
 
-	// Записываем пользовательские права memeber в БД.
-	// err = db_main.SetupMember(userID)
-	// if err != nil {
-	// 	return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-	// 		"error": true,
-	// 		"msg":   "Не удалось сохранить в БД статус MEMBER!",
-	// 	})
-	// }
+	// Получаем идентификатор нового пользователя
+	userID := createdUser.User_ID
 
 	// Генерация JWT токена
 	token, err := GetNewAccessToken(userID) // Передаем userID в функцию
@@ -80,21 +71,11 @@ func Register(c *fiber.Ctx) error {
 			"msg":   "Ошибка генерации токена: " + err.Error(),
 		})
 	}
-	// Получаем статус пользователя из БД
-	// rightsUser, err := db_main.GetUserRightByID(userID)
-	// if err != nil {
-	// 	return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-	// 		"error": true,
-	// 		"msg":   "Не удалось получить пользователя из БД после сохранения",
-	// 	})
-	// }
+
 	// Удаляем пароль из ответа
 	createdUser.Password = ""
 
-	// Добавляем права пользователя
-	// createdUser.User_Right = rightsUser
-
-	fmt.Printf("Созданный пользователь: %+v\n", createdUser)
+	fmt.Printf("Зарегистрирован пользователь: %+v\n", createdUser)
 
 	// Возвращаем статус 200 OK.
 	return c.JSON(fiber.Map{

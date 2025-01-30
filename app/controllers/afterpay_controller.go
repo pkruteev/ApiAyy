@@ -12,52 +12,50 @@ import (
 )
 
 func AfterPay(c *fiber.Ctx) error {
-	// Get now time.
+	// Получаем текущее время.
 	now := time.Now().Unix()
 
-	// Get claims from JWT.
+	// Получаем данные из JWT.
 	claims, err := utils.ExtractTokenMetadata(c)
 	if err != nil {
-		// Return status 500 and JWT parse error.
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": true,
 			"msg":   err.Error(),
 		})
 	}
 
-	// Set expiration time from JWT data of current.
+	// Устанавливаем время истечения токена.
 	expires := claims.Expires
-	userId := fmt.Sprintf("%v", claims.UserId) // Приведение типа float64 к string
+	userId := fmt.Sprintf("%v", claims.UserId)
 
-	// Checking, if now time greater than expiration from JWT.
+	// Проверяем, истек ли токен.
 	if now > expires {
-		// Return status 401 and unauthorized error message.
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": true,
 			"msg":   "unauthorized, check expiration time of your token",
 		})
 	}
-	////Блок создания таблиц по имени User ID/////
-	// Подключение к базе данных main
-	db, err := database.DBConnection("main")
+
+	// Подключение к основной базе данных.
+	db_main, err := database.DBConnection("main")
 	if err != nil {
-		log.Fatalf("Ошибка подключения к базе данных: %v", err)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": true,
+			"msg":   err.Error(),
+		})
 	}
 
-	//defer db.Close()
-
-	// Вызов функции для создания db с названием UsersID если не созданы
-	database.CreateDB(userId, db)
-
-	// Закрываем исходное соединение с базой данных db_main после создания новой бд
-	err = db.Close()
+	// Создание базы данных, если она еще не существует.
+	err = database.CreateDB(userId, db_main)
 	if err != nil {
-		log.Printf("Ошибка при закрытии соединения с БД: %v", err)
-		return err
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": true,
+			"msg":   "Ошибка сохранения пользователя в БД: " + err.Error(),
+		})
 	}
 
-	// Подключение к новой базе данных
-	db_new, err := database.PostgreNewSQLConnection(userId)
+	// Подключение к новой базе данных.
+	db_new, err := database.DBConnection(userId)
 	if err != nil {
 		log.Fatalf("Ошибка подключения к новой базе данных: %v", err)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -66,26 +64,10 @@ func AfterPay(c *fiber.Ctx) error {
 		})
 	}
 
-	// Вызов функции для создания таблиц если не созданы
+	// Вызов функции для создания всех таблиц, ошибки логируются внутри функции.
 	database.CreateAllTables(db_new)
 
-	// Закрываем новое соединение с базой данных после работы с ней,
-
-	defer func() {
-		if err := db_new.Close(); err != nil {
-			log.Printf("Ошибка при закрытии соединения с новой БД: %v", err)
-		}
-	}()
-	////Конец блока создания таблиц////
-	//Создаем соединение с базой данных.
-	db_main, err := database.DBMainConnection()
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": true,
-			"msg":   err.Error(),
-		})
-	}
-	// Приведение типов.
+	// Приведение типов для userId.
 	userIdUint64, err := strconv.ParseUint(userId, 10, 32)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -96,38 +78,37 @@ func AfterPay(c *fiber.Ctx) error {
 
 	userIdUint := uint(userIdUint64)
 
-	// Записываем пользовательские права admin в БД.
-	err = db_main.SetupUserRight(userIdUint, "admin", userIdUint)
-	var setupErrorMsg string
+	// Подключение к основной базе данных.
+	db_maim_queries, err := database.DBConnectionQueries("main")
 	if err != nil {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": true,
-			"msg":   "Err 409 - Пользователь с такими правами уже зарегистрирован в системе",
+			"msg":   err.Error(),
 		})
 	}
 
-	// Получаем статус пользователя из БД
-	rightsUser, err := db_main.GetUserRightByID(userIdUint)
+	// Записываем пользовательские права admin в БД.
+	err = db_maim_queries.SetupUserRight(userIdUint, userIdUint, "admin")
 	if err != nil {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+		return c.Status(fiber.StatusConflict).JSON(fiber.Map{
+			"error": true,
+			"msg":   "Пользователь с такими правами уже зарегистрирован в системе",
+		})
+	}
+
+	// Получаем статус пользователя из БД.
+	rightsUser, err := db_maim_queries.GetUserRightByID(userIdUint)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": true,
 			"msg":   "Не удалось получить статус пользователя из БД после сохранения",
 		})
 	}
 
-	// return c.Status(fiber.StatusOK).JSON(fiber.Map{
-	// 	"message":    fmt.Sprintf("База данных '%s' успешно создана и подключена", userId),
-	// 	"user_right": rightsUser,
-	// })
-	// Формируем ответ
+	// Формируем ответ.
 	response := fiber.Map{
 		"message":    fmt.Sprintf("База данных '%s' успешно создана и подключена", userId),
 		"user_right": rightsUser,
-	}
-
-	// Если была ошибка при установке прав, добавляем ее в ответ
-	if setupErrorMsg != "" {
-		response["setup_error"] = setupErrorMsg
 	}
 
 	return c.Status(fiber.StatusOK).JSON(response)

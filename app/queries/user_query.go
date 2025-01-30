@@ -2,6 +2,7 @@ package queries
 
 import (
 	"ApiAyy/app/models"
+	"database/sql"
 	"fmt"
 
 	"github.com/jmoiron/sqlx"
@@ -27,49 +28,32 @@ func (q *UserQueries) RegisterUser(b *models.UserType) error {
 	return nil
 }
 
-func (q *UserQueries) SetupMember(id uint) error {
-
-	const User_Right = "member"
-
-	query := "INSERT INTO rights (user_id, user_right) VALUES ($1, $2)"
-	fmt.Println(id, User_Right)
-
-	// Отправьте запрос в базу данных.
-	_, err := q.Exec(query, id, User_Right)
-	if err != nil {
-		// Верните только ошибку.
-		return err
-	}
-
-	return nil
-}
-
-func (q *UserQueries) SetupUserRight(id uint, right string, userCompany uint) error {
+func (q *UserQueries) SetupUserRight(id uint, userBd uint, rights string) error {
 
 	// Устанавливаем поле user_company в id, если право равно "admin", иначе используем переданное значение
 	// if right == "admin" {
-	// 	userCompany = id
+	//   userCompany = id
 	// }
 
-	query := "INSERT INTO rights (user_id, user_right, user_company) VALUES ($1, $2, $3)"
+	query := "INSERT INTO rights (user_id, user_bd, user_rights) VALUES ($1, $2, $3)"
 
 	// Выводим пользовательские данные в консоль для отладки.
-	fmt.Println("User ID:", id, "Right:", right, "User Company:", userCompany)
+	// fmt.Println("User ID:", id, "user_bd:", userBd, "Rights:", rights)
 
 	// Проверка на дублирующую запись по всем параметрам
-	existsQuery := "SELECT COUNT(*) FROM rights WHERE user_id = $1 AND user_right = $2 AND user_company = $3"
+	existsQuery := "SELECT COUNT(*) FROM rights WHERE user_id = $1 AND user_bd = $2 AND user_rights = $3"
 	var count int
-	err := q.QueryRow(existsQuery, id, right, userCompany).Scan(&count)
+	err := q.QueryRow(existsQuery, id, userBd, rights).Scan(&count)
 	if err != nil {
 		return fmt.Errorf("ошибка проверки существования записи: %w", err)
 	}
 
 	if count > 0 {
-		return fmt.Errorf("пользователь с ID %d уже имеет необходимые права: %s для компании: %d", id, right, userCompany) // Обновлено сообщение об ошибке
+		return fmt.Errorf("пользователь с ID %d уже имеет необходимые права: %s для компании: %d", id, rights, userBd)
 	}
 
 	// Выполняем запрос в базу данных.
-	_, err = q.Exec(query, id, right, userCompany)
+	_, err = q.Exec(query, id, userBd, rights)
 	if err != nil {
 		return fmt.Errorf("ошибка при установке прав пользователя: %w", err)
 	}
@@ -78,7 +62,6 @@ func (q *UserQueries) SetupUserRight(id uint, right string, userCompany uint) er
 }
 
 func (q *UserQueries) GetUserByEmail(UserEmail string) (models.UserType, error) {
-	// fmt.Println(UserEmail)
 
 	// Определяем переменную для хранения пользователя.
 	user := models.UserType{}
@@ -87,7 +70,6 @@ func (q *UserQueries) GetUserByEmail(UserEmail string) (models.UserType, error) 
 	query := "SELECT * FROM users WHERE user_email = $1"
 
 	// Используйте QueryRow для получения строки.
-
 	err := q.Get(&user, query, UserEmail)
 	if err != nil {
 		// Возвращаем пустой объект и ошибку.
@@ -100,18 +82,50 @@ func (q *UserQueries) GetUserByEmail(UserEmail string) (models.UserType, error) 
 
 func (q *UserQueries) GetUserRightByID(userID uint) (string, error) {
 	// Определяем переменную для хранения прав пользователя.
-	var userRight string
+	var userRights string
 
 	// Определяем строку запроса.
-	query := "SELECT user_right FROM rights WHERE user_id = $1"
+	query := "SELECT user_rights FROM rights WHERE user_id = $1"
 
 	// Используйте QueryRow для получения строки.
-	err := q.QueryRow(query, userID).Scan(&userRight) // Используйте Scan для извлечения значения
+	err := q.QueryRow(query, userID).Scan(&userRights) // Используйте Scan для извлечения значения
 
 	// Проверка на наличие ошибки
 	if err != nil {
 		return "", err // Возвращаем пустую строку и ошибку
 	}
 
-	return userRight, nil // Возвращаем права пользователя и nil как ошибку
+	return userRights, nil // Возвращаем права пользователя и nil как ошибку
+}
+
+func (q *UserQueries) GetUserForResponsById(UserID uint) (models.UserResponse, error) {
+
+	user := models.UserResponse{}
+
+	query := "SELECT first_name, last_name, patronymic_name, user_email, user_phone FROM users WHERE user_id = $1"
+
+	err := q.Get(&user, query, UserID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return user, fmt.Errorf("пользователь с ID %d не найден", UserID)
+		}
+		return user, err
+	}
+
+	rightsQuery := "SELECT user_rights FROM rights WHERE user_id = $1"
+
+	var userRights string
+	err = q.Get(&userRights, rightsQuery, UserID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			// Оставляем значение по умолчанию, если права не найдены
+			// Сюда можно добавить логику для выбора другого значения
+		} else {
+			return user, err
+		}
+	} else {
+		user.UserRights = userRights
+	}
+
+	return user, nil
 }

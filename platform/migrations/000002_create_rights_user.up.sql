@@ -15,8 +15,8 @@ CREATE TABLE IF NOT EXISTS public.rights
             rights_id              integer NOT NULL DEFAULT nextval('rights_right_id_seq'::regclass),
             created_at             TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
             user_id                integer NOT NULL,
-            user_company           integer NOT NULL,
-            user_right             character varying(55) NOT NULL,
+            user_bd                integer NOT NULL,
+            user_rights            character varying(55) NOT NULL,
             CONSTRAINT fk_user_id  FOREIGN KEY (user_id) REFERENCES public.users(user_id),
             CONSTRAINT pk_rights_id   PRIMARY KEY (rights_id)
         )

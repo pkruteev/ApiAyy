@@ -6,24 +6,23 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-// (userId string, db_main *database.Queries)
-// func CreateDB(userId string, db_main *sqlx.DB) error {
-func CreateDB(userId string, db_main *sqlx.DB) error {
+func CreateDB(db_name string, db *sqlx.DB) error {
+
 	var exists bool
 	checkQuery := "SELECT EXISTS(SELECT 1 FROM pg_catalog.pg_database WHERE datname = $1);"
-	if err := db_main.Get(&exists, checkQuery, userId); err != nil {
-		log.Printf("Ошибка при проверке существования БД %s: %v", userId, err)
+	if err := db.Get(&exists, checkQuery, db_name); err != nil {
+		log.Printf("Ошибка при проверке существования БД %s: %v", db_name, err)
 		return err
 	}
 
 	if exists {
-		log.Printf("База данных %s уже существует", userId)
+		log.Printf("База данных %s уже существует", db_name)
 		return nil
 	}
 
-	createDBQuery := "CREATE DATABASE \"" + userId + "\";"
-	if _, err := db_main.Exec(createDBQuery); err != nil {
-		log.Printf("Ошибка при создании БД %s: %v", userId, err)
+	createDBQuery := "CREATE DATABASE \"" + db_name + "\";"
+	if _, err := db.Exec(createDBQuery); err != nil {
+		log.Printf("Ошибка при создании БД %s: %v", db_name, err)
 		return err
 	}
 

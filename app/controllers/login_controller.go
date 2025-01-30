@@ -4,7 +4,6 @@ import (
 	"ApiAyy/app/models"
 	"ApiAyy/platform/database"
 	"fmt"
-	"log"
 
 	"github.com/gofiber/fiber/v2"
 	"golang.org/x/crypto/bcrypt"
@@ -20,26 +19,16 @@ func Login(c *fiber.Ctx) error {
 			"msg":   err.Error(),
 		})
 	}
-	fmt.Printf("Parsed loginData: %+v\n", loginData) // Логируем содержимое loginData
 
-	// Подключаемся к бд.
-	// db, err := database.OpenDBConnection()
-	// if err != nil {
-	// 	return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-	// 		"error": true,
-	// 		"msg":   err.Error(),
-	// 	})
-	// }
-
-	// Подключение к базе данных main
-	queries, err := database.DBMainConnection()
+	queries, err := database.DBConnectionQueries("main")
 	if err != nil {
-		log.Fatalf("Ошибка подключения к базе данных: %v", err)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": true,
+			"msg":   err.Error(),
+		})
 	}
 
 	// Получаем пользователя из базы данных по email.
-
-	//////////////////DBMainConnection()
 	user, err := queries.GetUserByEmail(loginData.UserEmail)
 	if err != nil {
 		fmt.Println("Пользователь не найден по данному email:", loginData.UserEmail)
@@ -48,7 +37,7 @@ func Login(c *fiber.Ctx) error {
 			"msg":   "Неправильный логин или пароль",
 		})
 	}
-	fmt.Printf("Созданный пользователь: %+v\n", user)
+
 	// Сравниваем введенный пароль с сохраненным хешем
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(loginData.Password))
 	if err != nil {

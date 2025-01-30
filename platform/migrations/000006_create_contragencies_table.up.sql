@@ -5,9 +5,11 @@ SET TIMEZONE='Europe/Moscow';
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_sequences WHERE sequencename = 'contragencies_contragency_id_seq') THEN
-        CREATE SEQUENCE contragencies_contragency_id_seq;
+        CREATE SEQUENCE IF NOT EXISTS public.contragencies_contragency_id_seq;
     END IF;
 END $$;
+   
+   
 
 -- Create contragencies table
 CREATE TABLE IF NOT EXISTS public.contragencies
@@ -29,5 +31,5 @@ CREATE TABLE IF NOT EXISTS public.contragencies
 
 TABLESPACE pg_default;
 
-ALTER TABLE IF EXISTS public.contragencies
-    OWNER to admin;
+ALTER TABLE IF EXISTS public.contragencies;
+    -- OWNER to admin;

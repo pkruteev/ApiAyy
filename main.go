@@ -6,53 +6,49 @@ import (
 	"ApiAyy/pkg/routes"
 	"ApiAyy/pkg/utils"
 	"ApiAyy/platform/database"
-	"fmt"
 	"log"
 
 	"github.com/gofiber/fiber/v2"
 )
 
 func main() {
-	// Define Fiber config.
+	// Определяем конфигурацию Fiber.
 	config := configs.FiberConfig()
 
-	// Define a new Fiber app with config.
+	// Создаем новое приложение Fiber с конфигурацией.
 	app := fiber.New(config)
 
-	// Middlewares.
+	// Подключаем middleware.
 	middleware.FiberMiddleware(app)
 
-	////////////////////
-	// Подключение к cтартовой бд postgres
+	// Подключение к стартовой БД postgres.
 	db_postgres, err := database.DBConnection("postgres")
 	if err != nil {
 		log.Fatalf("Ошибка подключения к базе данных: %v", err)
 	}
 
-	defer db_postgres.Close()
+	// Создание основной БД
+	err = database.CreateDB("main", db_postgres)
+	if err != nil {
+		log.Fatalf("Ошибка при создании базы данных 'main': %v", err)
+	}
 
-	// Создание основной бд
-	database.CreateDBmain(db_postgres, "main")
+	// fmt.Println("Пул соединений успешно создан.")
 
-	fmt.Println("Пул соединений успешно создан.")
-
-	// Подключение к базе данных main
+	// Подключение к базе данных main.
 	db_main, err := database.DBConnection("main")
 	if err != nil {
 		log.Fatalf("Ошибка подключения к базе данных: %v", err)
 	}
 
-	defer db_main.Close()
-
-	// Вызов функции для создания таблицы Users если не созданы
+	// Вызов функции для создания таблицы Users, если не созданы.
 	database.CreateTables(db_main)
 
-	// Routes.
-	// В случае, если вам нужно использовать объект db в маршрутах, передайте его в маршруты
-	routes.PublicRoutes(app)  // Register a public routes for app, передаем db
-	routes.PrivateRoutes(app) // Register a private routes for app, передаем db
-	routes.NotFoundRoute(app) // Register route for 404 Error.
+	// Регистрация маршрутов.
+	routes.PublicRoutes(app)  // Регистрация публичных маршрутов.
+	routes.PrivateRoutes(app) // Регистрация приватных маршрутов.
+	routes.NotFoundRoute(app) // Регистрация маршрута для ошибки 404.
 
-	// Start server (with graceful shutdown).
+	// Запускаем сервер (с корректным завершением).
 	utils.StartServer(app)
 }
