@@ -9,13 +9,12 @@ import (
 
 // Список пар "название таблицы" - "путь к SQL файлу".
 var all_tables = map[string]string{
-
-	"companies": "platform/migrations/000003_create_companies_table.up.sql",
-	// "r_schets":               "platform/migrations/000004_create_r_schets_table.up.sql",
-	// "objects":                "platform/migrations/000005_create_objects_table.up.sql",
-	// "contragencies":          "platform/migrations/000006_create_contragencies_table.up.sql",
-	// "r_schets_contragencies": "platform/migrations/000007_create_contragencies_r_schets_table.up.sql",
-	// "contracts":              "platform/migrations/000008_create_contracts_table.up.sql",
+	"companies":              "platform/migrations/000003_create_companies_table.up.sql",
+	"r_schets":               "platform/migrations/000004_create_r_schets_table.up.sql",
+	"contragencies":          "platform/migrations/000006_create_contragencies_table.up.sql",
+	"r_schets_contragencies": "platform/migrations/000007_create_contragencies_r_schets_table.up.sql",
+	"objects":                "platform/migrations/000005_create_objects_table.up.sql",
+	"contracts":              "platform/migrations/000008_create_contracts_table.up.sql",
 }
 
 // CreateTables создает все таблицы из списка.

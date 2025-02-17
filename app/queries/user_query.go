@@ -29,6 +29,37 @@ func (q *UserQueries) RegisterUser(b *models.UserType) error {
 }
 
 func (q *UserQueries) SetupUserRight(id uint, userBd uint, rights string) error {
+	query := "INSERT INTO rights (user_id, user_bd, user_rights) VALUES ($1, $2, $3)"
+
+	existsQuery := `
+		 SELECT 
+			  COUNT(*) FILTER (WHERE user_id = $1 AND user_bd = $2 AND user_rights = $3) AS rights_count,
+			  COUNT(*) FILTER (WHERE user_id = $1 AND user_rights = 'admin') AS admin_count
+		 FROM rights`
+
+	var rightsCount, adminCount int
+	err := q.QueryRow(existsQuery, id, userBd, rights).Scan(&rightsCount, &adminCount)
+	if err != nil {
+		return fmt.Errorf("ошибка проверки существования записи: %w", err)
+	}
+
+	if rightsCount > 0 {
+		return fmt.Errorf("пользователь с ID %d уже имеет необходимые права: %s для компании: %d", id, rights, userBd)
+	}
+
+	if adminCount > 0 {
+		return fmt.Errorf("пользователь с ID %d уже имеет права администратора", id)
+	}
+
+	_, err = q.Exec(query, id, userBd, rights)
+	if err != nil {
+		return fmt.Errorf("ошибка при установке прав пользователя: %w", err)
+	}
+
+	return nil
+}
+
+func (q *UserQueries) SetupUserRight2(id uint, userBd uint, rights string) error {
 
 	// Устанавливаем поле user_company в id, если право равно "admin", иначе используем переданное значение
 	// if right == "admin" {
@@ -50,6 +81,17 @@ func (q *UserQueries) SetupUserRight(id uint, userBd uint, rights string) error 
 
 	if count > 0 {
 		return fmt.Errorf("пользователь с ID %d уже имеет необходимые права: %s для компании: %d", id, rights, userBd)
+	}
+	// Добавляем проверку на наличие пользователя с user_rights = admin
+	adminQuery := "SELECT COUNT(*) FROM rights WHERE user_id = $1 AND user_rights = 'admin'"
+	var adminCount int
+	err = q.QueryRow(adminQuery, id).Scan(&adminCount)
+	if err != nil {
+		return fmt.Errorf("ошибка проверки прав администратора: %w", err)
+	}
+
+	if adminCount > 0 {
+		return fmt.Errorf("пользователь с ID %d уже имеет права администратора", id)
 	}
 
 	// Выполняем запрос в базу данных.
@@ -102,7 +144,7 @@ func (q *UserQueries) GetUserForResponsById(UserID uint) (models.UserResponse, e
 
 	user := models.UserResponse{}
 
-	query := "SELECT first_name, last_name, patronymic_name, user_email, user_phone FROM users WHERE user_id = $1"
+	query := "SELECT user_id, first_name, last_name, patronymic_name, user_email, user_phone FROM users WHERE user_id = $1"
 
 	err := q.Get(&user, query, UserID)
 	if err != nil {

@@ -31,5 +31,5 @@ CREATE TABLE IF NOT EXISTS public.contragencies
 
 TABLESPACE pg_default;
 
-ALTER TABLE IF EXISTS public.contragencies;
-    -- OWNER to admin;
+ALTER TABLE IF EXISTS public.contragencies
+    OWNER to admin;

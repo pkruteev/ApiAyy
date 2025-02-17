@@ -21,6 +21,27 @@ func (q *MyUsersQueries) GetMyUsers(userId uint) ([]models.UserType, error) {
 	// Выводим userId для отладки.
 	// log.Printf("Executing query with userId: %d", userId)
 
+	// Используем Select для получения всех строк.
+	err := q.Select(&users, query, userId)
+	if err != nil {
+		return users, err
+	}
+
+	// Выводим найденных пользователей для отладки.
+	// log.Printf("Retrieved users: %+v", users)
+	return users, nil
+}
+
+func (q *MyUsersQueries) GetMyUsers2(userId uint) ([]models.UserType, error) {
+	// Определяем переменную для хранения пользователей.
+	users := []models.UserType{}
+
+	// Строка запроса для таблицы rights.
+	query := "SELECT * FROM rights WHERE user_bd = $1"
+
+	// Выводим userId для отладки.
+	// log.Printf("Executing query with userId: %d", userId)
+
 	// Используйте Select для получения всех строк.
 	err := q.Select(&users, query, userId)
 	if err != nil {
