@@ -171,3 +171,29 @@ func (q *UserQueries) GetUserForResponsById(UserID uint) (models.UserResponse, e
 
 	return user, nil
 }
+func (q *UserQueries) RecordNameBdAdmin(id uint) error {
+	// Проверяем существование значения bd
+	var adminCount int
+	existsQuery := `SELECT COUNT(*) 
+						 FROM users 
+						 WHERE user_id = $1 AND bd IS NOT NULL`
+
+	err := q.QueryRow(existsQuery, id).Scan(&adminCount)
+	if err != nil {
+		return fmt.Errorf("ошибка при проверке существования bd: %w", err)
+	}
+
+	// Если значение bd уже существует, выходим из функции без ошибки
+	if adminCount > 0 {
+		return nil
+	}
+
+	// Запись нового значения bd
+	query := "INSERT INTO users (user_id, bd) VALUES ($1, $2)"
+	_, err = q.Exec(query, id, id)
+	if err != nil {
+		return fmt.Errorf("ошибка при установке имени bd: %w", err)
+	}
+
+	return nil
+}

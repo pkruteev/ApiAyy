@@ -11,23 +11,21 @@ type CompanyQueries struct {
 }
 
 // GetCompanies method for getting all companies.
-// func (q *CompanyQueries) GetCompanies() ([]models.Company, error) {
-// 	// Define Companies variable.
-// 	Companies := []models.Company{}
+func (q *CompanyQueries) GetCompanies() ([]models.Company, error) {
+	// Определяем переменную для хранения пользователей.
+	companies := []models.Company{}
 
-// 	// Define query string.
-// 	query := `SELECT * FROM Companies`
+	// Строка запроса для таблицы companies.
+	query := "SELECT * FROM companies"
 
-// 	// Send query to database.
-// 	err := q.Select(&companies, query)
-// 	if err != nil {
-// 		// Return empty object and error.
-// 		return companies, err
-// 	}
-
-// 	// Return query result.
-// 	return companies, nil
-// }
+	// Используем Select для получения всех строк.
+	err := q.Select(&companies, query)
+	if err != nil {
+		return companies, err
+	}
+	// log.Printf("All company, companies)
+	return companies, nil
+}
 
 // GetCompany method for getting one company by given ID.
 func (q *CompanyQueries) GetCompany(company_id uint) (models.Company, error) {
@@ -50,14 +48,13 @@ func (q *CompanyQueries) GetCompany(company_id uint) (models.Company, error) {
 
 // CreateCompany method for creating Company by given Company object.
 func (q *CompanyQueries) CreateCompany(b *models.Company) error {
-
-	// Определите строку запроса, исключив поле USER_ID.
+	// Определите строку запроса, исключив поле Company_Id.
 	query := "INSERT INTO company (created_at, status_company, company_name, inn, kpp, ogrn, ur_adress, mail_adress, phone, email, director) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)"
 
 	// Отправьте запрос в базу данных.
 	_, err := q.Exec(query, b.CreatedAt, b.Company_status, b.Company_name, b.Inn, b.Kpp, b.Ogrn, b.Ur_adress, b.Mail_adress, b.Phone, b.Email, b.Director)
 	if err != nil {
-		// Return only error.
+		// Вернуть только ошибку.
 		return err
 	}
 

@@ -2,6 +2,9 @@ package controllers
 
 import (
 	"ApiAyy/pkg/utils"
+	"time"
+
+	"github.com/gofiber/fiber/v2"
 )
 
 func GetNewAccessToken(userID uint) (string, error) {
@@ -12,4 +15,21 @@ func GetNewAccessToken(userID uint) (string, error) {
 	}
 
 	return token, nil // Возвращаем сгенерированный токен
+}
+
+func ValidateToken(c *fiber.Ctx) error {
+	now := time.Now().Unix()
+
+	claims, err := utils.ExtractTokenMetadata(c)
+	if err != nil {
+		return err
+	}
+
+	expires := claims.Expires
+
+	if now > expires {
+		return fiber.NewError(fiber.StatusUnauthorized, "unauthorized, check expiration time of your token")
+	}
+
+	return nil
 }

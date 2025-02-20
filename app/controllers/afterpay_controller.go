@@ -87,6 +87,15 @@ func AfterPay(c *fiber.Ctx) error {
 		})
 	}
 
+	// Запись в поле bd имени основной бд для admin.
+	err = db_maim_queries.RecordNameBdAdmin(userIdUint)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": true,
+			"msg":   "Ошибка зааписи имени основной бд для admin: " + err.Error(),
+		})
+	}
+
 	// Записываем пользовательские права admin в БД.
 	err = db_maim_queries.SetupUserRight(userIdUint, userIdUint, "admin")
 	if err != nil {

@@ -20,13 +20,15 @@ END $$;
 -- Create users table
 CREATE TABLE IF NOT EXISTS public.users
 (
-    user_id integer NOT NULL DEFAULT nextval('users_user_id_seq'::regclass),
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    first_name character varying(50) NOT NULL,
-    patronymic_name character varying(50),
-    last_name character varying(50),
-    user_email character varying(50) NOT NULL UNIQUE,
-    user_phone character varying(20),
+    user_id          integer NOT NULL DEFAULT nextval('users_user_id_seq'::regclass),
+    holding          character varying(55) NOT NULL,
+    bd               integer NOT NULL,
+    created_at       TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    first_name       character varying(50) NOT NULL,
+    patronymic_name  character varying(50),
+    last_name        character varying(50),
+    user_email       character varying(50) NOT NULL UNIQUE,
+    user_phone       character varying(20),
     password character varying(255) NOT NULL,
     CONSTRAINT users_pkey PRIMARY KEY (user_id)
 )

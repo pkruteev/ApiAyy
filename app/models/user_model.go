@@ -6,6 +6,7 @@ import "time"
 type UserType struct {
 	User_ID        uint      `db:"user_id"          json:"user_id,omitempty"`
 	CreatedAt      time.Time `db:"created_at"       json:"created_at,omitempty"`
+	Bd             uint      `db:"bd"               json:"bd,omitempty"`
 	FirstName      string    `db:"first_name"       json:"first_name,omitempty"`
 	LastName       string    `db:"last_name"        json:"last_name,omitempty"`
 	PatronymicName string    `db:"patronymic_name"  json:"patronymic_name,omitempty"`
