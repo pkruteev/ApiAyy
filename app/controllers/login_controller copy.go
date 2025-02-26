@@ -10,7 +10,7 @@ import (
 )
 
 // Login контроллер для входа пользователя в систему.
-func Login(c *fiber.Ctx) error {
+func LoginCopy(c *fiber.Ctx) error {
 	// Создаем новую структуру для получения данных пользователя.
 	loginData := &models.UserType{}
 	if err := c.BodyParser(loginData); err != nil {
@@ -55,16 +55,9 @@ func Login(c *fiber.Ctx) error {
 			"msg":   "Ошибка генерации токена: " + err.Error(),
 		})
 	}
-	// Получаем пользователя из двух таблиц для отправки
-	userResponse, err := queries.GetUserForResponsById(user.UserID)
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": true,
-			"msg":   "не удалось получить пользователя",
-		})
-	}
+
 	// Удаляем пароль из ответа
-	// userResponse.Password = ""
+	user.Password = ""
 	// user.CreatedUser = ""
 
 	// Возвращаем статус 200 OK, данные пользователя и токен
@@ -72,6 +65,6 @@ func Login(c *fiber.Ctx) error {
 		"error": false,
 		"msg":   "Успешный вход в систему",
 		"token": token,
-		"user":  userResponse,
+		"user":  loginData,
 	})
 }

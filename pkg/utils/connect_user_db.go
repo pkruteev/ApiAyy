@@ -17,7 +17,7 @@ func ConnectToUserDB(c *fiber.Ctx, user *models.UserType) (*database.Queries, er
 		return nil, fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
 
-	userBd := user.Bd
+	userBd := user.UserBD
 
 	// Проверяем, что userBd не равен 0
 	if userBd == 0 {

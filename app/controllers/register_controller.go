@@ -3,7 +3,6 @@ package controllers
 import (
 	"ApiAyy/app/models"
 	"ApiAyy/platform/database"
-	"fmt"
 
 	"github.com/gofiber/fiber/v2"
 	"golang.org/x/crypto/bcrypt"
@@ -52,36 +51,36 @@ func Register(c *fiber.Ctx) error {
 	}
 
 	// Получаем пользователя из базы данных по email.
-	createdUser, err := db_main.GetUserByEmail(user.UserEmail)
-	if err != nil {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"error": true,
-			"msg":   "Не удалось получить пользователя из БД после сохранения",
-		})
-	}
+	// createdUser, err := db_main.GetUserByEmail(user.UserEmail)
+	// if err != nil {
+	// 	return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+	// 		"error": true,
+	// 		"msg":   "Не удалось получить пользователя из БД",
+	// 	})
+	// }
 
 	// Получаем идентификатор нового пользователя
-	userID := createdUser.User_ID
+	// userID := createdUser.UserID
 
 	// Генерация JWT токена
-	token, err := GetNewAccessToken(userID) // Передаем userID в функцию
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": true,
-			"msg":   "Ошибка генерации токена: " + err.Error(),
-		})
-	}
+	// token, err := GetNewAccessToken(userID)
+	// if err != nil {
+	// 	return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+	// 		"error": true,
+	// 		"msg":   "Ошибка генерации токена: " + err.Error(),
+	// 	})
+	// }
 
 	// Удаляем пароль из ответа
-	createdUser.Password = ""
+	// createdUser.Password = ""
 
-	fmt.Printf("Зарегистрирован пользователь: %+v\n", createdUser)
+	// fmt.Printf("Зарегистрирован пользователь: %+v\n", createdUser)
 
 	// Возвращаем статус 200 OK.
 	return c.JSON(fiber.Map{
 		"error": false,
 		"msg":   "User registered successfully",
-		"token": token,
-		"user":  createdUser,
+		// "token": token,
+		// "user":  createdUser,
 	})
 }

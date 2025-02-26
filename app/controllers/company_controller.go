@@ -26,7 +26,7 @@ func GetCompanies(c *fiber.Ctx) error {
 		})
 	}
 
-	userBd := user.Bd
+	userBd := user.UserBD
 
 	// Проверяем, что userBd не равен 0
 	if userBd == 0 {

@@ -17,16 +17,29 @@ var all_tables = map[string]string{
 	"contracts":              "platform/migrations/000008_create_contracts_table.up.sql",
 }
 
-// CreateTables создает все таблицы из списка.
+// CreateAllTables создает все таблицы из списка.
 func CreateAllTables(db *sqlx.DB) {
-	for tableName, sqlFile := range all_tables {
+	tableNames := make([]string, 0, len(all_tables))
+	for tableName := range all_tables {
+		tableNames = append(tableNames, tableName)
+	}
+
+	for i := 0; i < len(tableNames); i++ {
+		tableName := tableNames[i]
+		sqlFile := all_tables[tableName]
+
+		log.Printf("Начинаем создание таблицы %s из файла %s", tableName, sqlFile)
+
 		if err := executeAllSQLFile(db, sqlFile); err != nil {
 			log.Printf("Ошибка при выполнении SQL файла для таблицы %s: %v", tableName, err)
+			return
 		}
+
+		log.Printf("Таблица %s успешно создана.", tableName)
 	}
 }
 
-// executeSQLFile выполняет SQL-запрос из указанного файла.
+// executeAllSQLFile выполняет SQL-запрос из указанного файла.
 func executeAllSQLFile(db *sqlx.DB, filePath string) error {
 	sqlQuery, err := os.ReadFile(filePath)
 	if err != nil {
@@ -34,9 +47,10 @@ func executeAllSQLFile(db *sqlx.DB, filePath string) error {
 		return err
 	}
 
+	log.Printf("Выполнение SQL для файла %s", filePath)
 	_, err = db.Exec(string(sqlQuery))
 	if err != nil {
-		log.Printf("Ошибка выполнения SQL: %v", err)
+		log.Printf("Ошибка выполнения SQL для файла %s: %v", filePath, err)
 	}
 	return err
 }

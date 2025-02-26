@@ -2,6 +2,7 @@ package queries
 
 import (
 	"ApiAyy/app/models"
+	"log"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -19,16 +20,17 @@ func (q *MyUsersQueries) GetMyUsers(userId uint) ([]models.UserType, error) {
 	query := "SELECT * FROM rights WHERE user_bd = $1"
 
 	// Выводим userId для отладки.
-	// log.Printf("Executing query with userId: %d", userId)
+	log.Printf("Executing query with userId: %d", userId)
 
 	// Используем Select для получения всех строк.
 	err := q.Select(&users, query, userId)
 	if err != nil {
+
 		return users, err
 	}
 
 	// Выводим найденных пользователей для отладки.
-	// log.Printf("Retrieved users: %+v", users)
+	log.Printf("Retrieved users: %+v", users)
 	return users, nil
 }
 

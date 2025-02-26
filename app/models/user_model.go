@@ -4,19 +4,19 @@ import "time"
 
 // UserType определяет структуру пользователя
 type UserType struct {
-	User_ID        uint      `db:"user_id"          json:"user_id,omitempty"`
-	CreatedAt      time.Time `db:"created_at"       json:"created_at,omitempty"`
-	Bd             uint      `db:"bd"               json:"bd,omitempty"`
-	FirstName      string    `db:"first_name"       json:"first_name,omitempty"`
-	LastName       string    `db:"last_name"        json:"last_name,omitempty"`
-	PatronymicName string    `db:"patronymic_name"  json:"patronymic_name,omitempty"`
-	Rights_Id      uint      `db:"rights_id"        json:"rights_id,omitempty"`
-	User_Bd        uint      `db:"user_bd"          json:"user_bd,omitempty"`
-	User_Company   string    `db:"user_company"     json:"user_company,omitempty"`
-	User_Rights    string    `db:"user_rights"      json:"user_rights,omitempty"`
-	UserEmail      string    `db:"user_email"       json:"user_email"`
-	UserPhone      string    `db:"user_phone"       json:"user_phone,omitempty"`
-	Password       string    `db:"password"         json:"password"`
+	UserID         uint      `db:"user_id"               json:"user_id,omitempty"`
+	CreatedUser    time.Time `db:"created_user"          json:"created_user,omitempty"`
+	BdUsed         uint      `db:"bd_used"               json:"bd_used,omitempty"`
+	Holding        string    `db:"holding"               json:"holding,omitempty"`
+	FirstName      string    `db:"first_name"            json:"first_name,omitempty"`
+	PatronymicName string    `db:"patronymic_name"       json:"patronymic_name,omitempty"`
+	LastName       string    `db:"last_name"             json:"last_name,omitempty"`
+	RightsID       uint      `db:"rights_id"             json:"rights_id,omitempty"`
+	UserBD         uint      `db:"user_bd"               json:"user_bd,omitempty"`
+	UserRights     string    `db:"user_rights"           json:"user_rights,omitempty"`
+	UserEmail      string    `db:"user_email"            json:"user_email"`
+	UserPhone      string    `db:"user_phone"            json:"user_phone,omitempty"`
+	Password       string    `db:"password"              json:"password,omitempty"`
 }
 
 // UserRole определяет роли пользователя
@@ -29,6 +29,7 @@ type UserRigh struct {
 
 type UserResponse struct {
 	UserID         uint   `db:"user_id"          json:"user_id,omitempty"`
+	BdUsed         uint   `db:"bd_used"               json:"bd_used,omitempty"`
 	FirstName      string `db:"first_name"       json:"first_name,omitempty"`
 	LastName       string `db:"last_name"        json:"last_name,omitempty"`
 	PatronymicName string `db:"patronymic_name"  json:"patronymic_name,omitempty"`

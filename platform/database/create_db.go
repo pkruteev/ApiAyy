@@ -25,6 +25,5 @@ func CreateDB(db_name string, db *sqlx.DB) error {
 		log.Printf("Ошибка при создании БД %s: %v", db_name, err)
 		return err
 	}
-
 	return nil
 }

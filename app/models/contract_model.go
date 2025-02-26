@@ -6,10 +6,10 @@ type Contracts struct {
 	Contract_Id         uint      `db:"contract_id"            json:"contract_id"`
 	CreatedAt           time.Time `db:"created_at"             json:"created_at"`
 	Contract_number     string    `db:"contract_number"        json:"contract_number"`
-	Data_start_contract time.Time `db:"data_start_contract"    json:"data_start_contract"`
-	Data_end_contract   time.Time `db:"data_end_contract"      json:"data_end_contract"`
-	Data_start_rent     time.Time `db:"data_start_rent"        json:"data_start_rent"`
-	Data_end_rent       time.Time `db:"data_end_rent"          json:"data_end_rent"`
+	Date_start_contract time.Time `db:"date_start_contract"    json:"date_start_contract"`
+	Date_end_contract   time.Time `db:"date_end_contract"      json:"date_end_contract"`
+	Date_start_rent     time.Time `db:"date_start_rent"        json:"date_start_rent"`
+	Date_end_rent       time.Time `db:"date_end_rent"          json:"date_end_rent"`
 	Object_id           string    `db:"object_id"              json:"object_id"`
 	Company_id          string    `db:"company_id"             json:"company_id"`
 	Contragency_id      string    `db:"contragency_id"         json:"contragency_id"`

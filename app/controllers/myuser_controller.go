@@ -54,7 +54,7 @@ func GetMyUsers(c *fiber.Ctx) error {
 		// Возвращаем статус 404, если пользователи не найдены.
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 			"error": true,
-			"msg":   "не удалось получить список пользователей из БД",
+			"msg":   "ошибка GetMyUsers, таблицы rights",
 		})
 	}
 
@@ -63,11 +63,11 @@ func GetMyUsers(c *fiber.Ctx) error {
 
 	// Получаем пользователей из двух таблиц для отправки
 	for _, my_user := range my_users {
-		userResponse, err := myQueries.GetUserForResponsById(my_user.User_ID)
+		userResponse, err := myQueries.GetUserForResponsById(my_user.UserID)
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"error": true,
-				"msg":   "не удалось получить пользователя с ID " + fmt.Sprintf("%d", my_user.User_ID),
+				"msg":   "не удалось получить пользователя с ID " + fmt.Sprintf("%d", my_user.UserID),
 			})
 		}
 
@@ -146,7 +146,7 @@ func AddMyuser(c *fiber.Ctx) error {
 	}
 
 	// Записываем права в таблицу rights.
-	err = myQueries.SetupUserRight(my_user.User_ID, userId, myUserData.User_Rights)
+	err = myQueries.SetupUserRight(my_user.UserID, userId, myUserData.UserRights)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": true,
@@ -155,7 +155,7 @@ func AddMyuser(c *fiber.Ctx) error {
 	}
 
 	// Получаем пользователя из двух таблиц для отправки
-	userResponse, err := myQueries.GetUserForResponsById(my_user.User_ID)
+	userResponse, err := myQueries.GetUserForResponsById(my_user.UserID)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": true,
