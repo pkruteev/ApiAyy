@@ -17,19 +17,25 @@ func GetNewAccessToken(userID uint) (string, error) {
 	return token, nil // Возвращаем сгенерированный токен
 }
 
-func ValidateToken(c *fiber.Ctx) error {
+func ValidateToken(c *fiber.Ctx) (uint, error) {
+	// Получаем текущее время.
 	now := time.Now().Unix()
 
+	// Получаем данные из JWT.
 	claims, err := utils.ExtractTokenMetadata(c)
 	if err != nil {
-		return err
+		// Возвращаем ошибку парсинга JWT.
+		return 0, err
 	}
 
+	// Устанавливаем время истечения токена.
 	expires := claims.Expires
+	userId := uint(claims.UserId)
 
+	// Проверяем, истек ли токен.
 	if now > expires {
-		return fiber.NewError(fiber.StatusUnauthorized, "unauthorized, check expiration time of your token")
+		return 0, fiber.NewError(fiber.StatusUnauthorized, "unauthorized, check expiration time of your token")
 	}
 
-	return nil
+	return userId, nil
 }

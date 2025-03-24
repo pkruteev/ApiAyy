@@ -4,46 +4,33 @@ import "time"
 
 // UserType определяет структуру пользователя
 type UserType struct {
-	UserID         uint      `db:"user_id"               json:"user_id,omitempty"`
-	CreatedUser    time.Time `db:"created_user"          json:"created_user,omitempty"`
-	BdUsed         uint      `db:"bd_used"               json:"bd_used,omitempty"`
-	Holding        string    `db:"holding"               json:"holding,omitempty"`
-	FirstName      string    `db:"first_name"            json:"first_name,omitempty"`
-	PatronymicName string    `db:"patronymic_name"       json:"patronymic_name,omitempty"`
-	LastName       string    `db:"last_name"             json:"last_name,omitempty"`
-	RightsID       uint      `db:"rights_id"             json:"rights_id,omitempty"`
-	UserBD         uint      `db:"user_bd"               json:"user_bd,omitempty"`
-	UserRights     string    `db:"user_rights"           json:"user_rights,omitempty"`
-	UserEmail      string    `db:"user_email"            json:"user_email"`
-	UserPhone      string    `db:"user_phone"            json:"user_phone,omitempty"`
-	Password       string    `db:"password"              json:"password,omitempty"`
+	UserID         uint      `db:"user_id"          json:"userId,omitempty"`
+	CreatedUser    time.Time `db:"created_user"     json:"createdUser,omitempty"`
+	BdUsed         string    `db:"bd_used"          json:"bdUsed,omitempty"`
+	FirstName      string    `db:"first_name"       json:"firstName,omitempty"`
+	PatronymicName string    `db:"patronymic_name"  json:"patronymicName,omitempty"`
+	LastName       string    `db:"last_name"        json:"lastName,omitempty"`
+	UserEmail      string    `db:"user_email"       json:"userEmail"`
+	UserPhone      string    `db:"user_phone"       json:"userPhone,omitempty"`
+	Password       string    `db:"password"         json:"password,omitempty"`
+}
+
+// UserRights определяет права пользователя
+type UserRights struct {
+	RightsID      uint      `db:"rights_id"      json:"rightsId,omitempty"`
+	UserID        uint      `db:"user_id"        json:"userId,omitempty"`
+	CreatedRights time.Time `db:"created_rights" json:"createdRights,omitempty"`
+	UserBD        string    `db:"user_bd"        json:"userBd,omitempty"`
+	Holding       string    `db:"holding"        json:"holding,omitempty"`
+	UserRole      string    `db:"user_role"      json:"userRole,omitempty"`
 }
 
 // UserRole определяет роли пользователя
-type UserRigh struct {
-	Member   string `db:"member" json:"member,omitempty"`
-	Admin    string `db:"admin" json:"admin,omitempty"`
-	Director string `db:"director" json:"director,omitempty"`
-	Manager  string `db:"manager" json:"manager,omitempty"`
-}
+type UserRole string
 
-type UserResponse struct {
-	UserID         uint   `db:"user_id"          json:"user_id,omitempty"`
-	BdUsed         uint   `db:"bd_used"               json:"bd_used,omitempty"`
-	FirstName      string `db:"first_name"       json:"first_name,omitempty"`
-	LastName       string `db:"last_name"        json:"last_name,omitempty"`
-	PatronymicName string `db:"patronymic_name"  json:"patronymic_name,omitempty"`
-	UserRights     string `db:"user_rights"      json:"user_rights,omitempty"`
-	UserEmail      string `db:"user_email"       json:"user_email"`
-	UserPhone      string `db:"user_phone"       json:"user_phone,omitempty"`
-}
-
-type UserResponses struct {
-	UserID         uint   `db:"user_id" json:"user_id,omitempty"`
-	FirstName      string `db:"first_name" json:"first_name,omitempty"`
-	LastName       string `db:"last_name" json:"last_name,omitempty"`
-	PatronymicName string `db:"patronymic_name" json:"patronymic_name,omitempty"`
-	UserRights     string `db:"user_rights" json:"user_rights,omitempty"`
-	UserEmail      string `db:"user_email" json:"user_email"`
-	UserPhone      string `db:"user_phone" json:"user_phone,omitempty"`
-}
+const (
+	RoleMember   UserRole = "member"
+	RoleAdmin    UserRole = "admin"
+	RoleDirector UserRole = "director"
+	RoleManager  UserRole = "manager"
+)

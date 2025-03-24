@@ -12,14 +12,14 @@ END $$;
 -- Create users table
 CREATE TABLE IF NOT EXISTS public.users
 (
-    user_id          integer NOT NULL DEFAULT nextval('users_user_id_seq'::regclass),
+    user_id          INT NOT NULL DEFAULT nextval('users_user_id_seq'::regclass),
     created_user     TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    bd_used          integer,
-    first_name       character varying(50) NOT NULL,
-    patronymic_name  character varying(50),
-    last_name        character varying(50),
-    user_email       character varying(50) NOT NULL UNIQUE,
-    user_phone       character varying(20),
+    bd_used          character varying(55),
+    first_name       character varying(55) NOT NULL,
+    patronymic_name  character varying(55),
+    last_name        character varying(55),
+    user_email       character varying(55) NOT NULL UNIQUE,
+    user_phone       character varying(55),
     password         character varying(255) NOT NULL,
     CONSTRAINT users_pkey PRIMARY KEY (user_id)
 )

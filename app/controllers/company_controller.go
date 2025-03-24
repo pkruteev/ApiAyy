@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"ApiAyy/app/models"
-	"ApiAyy/pkg/utils"
 	"ApiAyy/platform/database"
 	"log"
 	"strconv"
@@ -10,91 +9,94 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-// Получить все компании
+// GetCompanies возвращает список всех компаний из указанной базы данных.
 func GetCompanies(c *fiber.Ctx) error {
-	// Проверка токена
-	if err := ValidateToken(c); err != nil {
-		return err // Возвращаем ошибку, если токен недействителен или истек
-	}
-
-	user := &models.UserType{}
-	// Проверяем, валидны ли полученные данные JSON.
-	if err := c.BodyParser(user); err != nil {
+	// Получаем имя базы данных из параметра запроса
+	bd := c.Params("bd")
+	if bd == "" {
+		log.Println("Имя базы данных не указано")
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": true,
-			"msg":   err.Error(),
+			"msg":   "Имя базы данных не указано",
 		})
 	}
 
-	userBd := user.UserBD
-
-	// Проверяем, что userBd не равен 0
-	if userBd == 0 {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": true,
-			"msg":   "Вы не авторизованы ни в одном холдинге",
-		})
-	}
-
-	// Преобразуем userBd в строку
-	userBdStr := strconv.FormatUint(uint64(userBd), 10)
-
-	// Подключение к базе данных пользователя.
-	bd, err := database.DBConnectionQueries(userBdStr)
+	// Подключаемся к указанной базе данных
+	db, err := database.DBConnectionQueries(bd)
 	if err != nil {
-		log.Fatalf("Ошибка подключения к базе данных: %v", err)
+		log.Printf("Ошибка подключения к базе данных %s: %v", bd, err)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": true,
 			"msg":   "Ошибка подключения к базе данных: " + err.Error(),
 		})
 	}
 
-	// Получаем компании из таблицы companies.
-	companies, err := bd.GetCompanies()
+	// Получаем компании из таблицы companies
+	companies, err := db.GetCompanies()
 	if err != nil {
-		// Возвращаем статус 404, если компании не найдены.
-		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+		log.Printf("Ошибка при получении компаний: %v", err)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": true,
-			"msg":   "Не удалось получить список компаний из БД",
+			"msg":   "Ошибка при получении компаний: " + err.Error(),
 		})
 	}
 
-	// Возвращаем ответ
+	// Возвращаем список компаний в формате JSON (пустой или нет)
 	return c.JSON(fiber.Map{
 		"error":     false,
 		"companies": companies,
 	})
 }
 
-// Записать в БД новую компанию
+// AddCompany добавляет новую компанию в базу данных.
 func AddCompany(c *fiber.Ctx) error {
 	// Проверка токена
-	if err := ValidateToken(c); err != nil {
+	if _, err := ValidateToken(c); err != nil {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": true,
-			"msg":   "Недействительный или истекший токен",
+			"msg":   err.Error(),
 		})
 	}
 
 	company := &models.Company{}
-	if err := c.BodyParser(company); err != nil {
+
+	// Структура для парсинга bd_used
+	type RequestBody struct {
+		BDUsed int `json:"bd_used"`
+	}
+
+	var body RequestBody
+
+	// Парсим bd_used
+	if err := c.BodyParser(&body); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": true,
-			"msg":   err.Error(),
+			"msg":   "Неверный формат данных: " + err.Error(),
 		})
 	}
 
-	user := &models.UserType{}
+	// Парсим company
+	if err := c.BodyParser(&company); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": true,
+			"msg":   "Неверный формат данных: " + err.Error(),
+		})
+	}
+
+	// Преобразуем bd_used в строку
+	bd := strconv.Itoa(body.BDUsed)
+
 	// Подключаемся к базе данных
-	db, err := utils.ConnectToUserDB(c, user)
+	db, err := database.DBConnectionQueries(bd)
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+		log.Printf("Ошибка подключения к базе данных %s: %v", bd, err)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": true,
-			"msg":   err.Error(),
+			"msg":   "Ошибка подключения к базе данных: " + err.Error(),
 		})
 	}
 
-	// Вызовите метод CreateCompany
+	// Вызываем метод CreateCompany
 	err = db.CreateCompany(company)
 	if err != nil {
 		log.Printf("Ошибка при создании компании: %v", err)

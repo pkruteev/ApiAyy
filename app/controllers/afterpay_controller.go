@@ -64,8 +64,12 @@ func AfterPay(c *fiber.Ctx) error {
 		})
 	}
 
-	// Вызов функции для создания всех таблиц, ошибки логируются внутри функции.
-	database.CreateAllTables(db_new)
+	// Создание таблиц
+	if err := database.CreateTables(db_new); err != nil {
+		log.Fatal("Ошибка создания таблиц:", err)
+	}
+
+	log.Println("Таблицы успешно созданы!")
 
 	// Приведение типов для userId.
 	userIdUint64, err := strconv.ParseUint(userId, 10, 32)
@@ -79,7 +83,7 @@ func AfterPay(c *fiber.Ctx) error {
 	userIdUint := uint(userIdUint64)
 
 	// Подключение к основной базе данных.
-	db_maim_queries, err := database.DBConnectionQueries("main")
+	db_main_queries, err := database.DBConnectionQueries("main")
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": true,
@@ -87,8 +91,34 @@ func AfterPay(c *fiber.Ctx) error {
 		})
 	}
 
+	// Получаем права пользователя из таблицы Rights
+	userRights, err := db_main_queries.GetUserRightsById(userIdUint)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": true,
+			"msg":   "Ошибка при получении прав пользователя: " + err.Error(),
+		})
+	}
+
+	// Проверяем, что пользователь имеет права admin и только в одной базе данных
+	hasAdminRights := false
+	for _, right := range userRights {
+		if right.UserRole == "admin" {
+			hasAdminRights = true
+			break
+		}
+	}
+
+	// Если пользователь уже является администратором в любой базе данных
+	if hasAdminRights {
+		return c.Status(fiber.StatusConflict).JSON(fiber.Map{
+			"error": true,
+			"msg":   "Пользователь с ID " + userId + " уже является администратором в другой базе данных",
+		})
+	}
+
 	// Запись в поле bd_used имени основной бд для admin.
-	err = db_maim_queries.SetupUserBd(userIdUint, userIdUint)
+	err = db_main_queries.SetupUserBd(userIdUint, userIdUint)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": true,
@@ -97,7 +127,7 @@ func AfterPay(c *fiber.Ctx) error {
 	}
 
 	// Записываем пользовательские права admin в БД.
-	err = db_maim_queries.SetupUserRight(userIdUint, userIdUint, "admin")
+	err = db_main_queries.SetupUserRight(userIdUint, userIdUint, "admin")
 	if err != nil {
 		return c.Status(fiber.StatusConflict).JSON(fiber.Map{
 			"error": true,
@@ -105,8 +135,8 @@ func AfterPay(c *fiber.Ctx) error {
 		})
 	}
 
-	// Получаем статус пользователя из БД.
-	rightsUser, err := db_maim_queries.GetUserRightByID(userIdUint)
+	// Получаем обновленный статус пользователя из БД.
+	updatedUserRights, err := db_main_queries.GetUserRightsById(userIdUint)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": true,
@@ -117,7 +147,7 @@ func AfterPay(c *fiber.Ctx) error {
 	// Формируем ответ.
 	response := fiber.Map{
 		"message":    fmt.Sprintf("База данных '%s' успешно создана и подключена", userId),
-		"user_right": rightsUser,
+		"user_right": updatedUserRights,
 	}
 
 	return c.Status(fiber.StatusOK).JSON(response)

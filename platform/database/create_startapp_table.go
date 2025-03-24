@@ -8,14 +8,14 @@ import (
 )
 
 // Список пар "название таблицы" - "путь к SQL файлу".
-var tables = map[string]string{
-	"users":  "platform/migrations/000001_create_users_table.up.sql",
-	"rights": "platform/migrations/000002_create_rights_user.up.sql",
+var tablesStart = map[string]string{
+	"users":  "platform/migrations/000001_create_users.up.sql",
+	"rights": "platform/migrations/000002_create_rights.up.sql",
 }
 
 // CreateTables создает все таблицы из списка.
-func CreateTables(db *sqlx.DB) {
-	for tableName, sqlFile := range tables {
+func CreateStartTables(db *sqlx.DB) {
+	for tableName, sqlFile := range tablesStart {
 		if err := executeSQLFile(db, sqlFile); err != nil {
 			log.Printf("Ошибка при выполнении SQL файла для таблицы %s: %v", tableName, err)
 			return

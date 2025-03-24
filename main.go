@@ -42,7 +42,7 @@ func main() {
 	}
 
 	// Вызов функции для создания таблицы Users, если не созданы.
-	database.CreateTables(db_main)
+	database.CreateStartTables(db_main)
 
 	// Регистрация маршрутов.
 	routes.PublicRoutes(app)  // Регистрация публичных маршрутов.

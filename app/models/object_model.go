@@ -3,11 +3,13 @@ package models
 import "time"
 
 type Objects struct {
-	Object_Id uint      `db:"object_id"       json:"object_id"`
-	CreatedAt time.Time `db:"created_at"      json:"created_at"`
-	Typereal  string    `db:"typereal"        json:"typereal"`
+	ObjectId  uint      `db:"object_id"       json:"objectId"`
+	CreatedOb time.Time `db:"created_ob"      json:"createdOb"`
+	TypeReal  string    `db:"typereal"        json:"typeReal"`
 	City      string    `db:"city"            json:"city"`
+	Street    string    `db:"street"          json:"street"`
 	House     string    `db:"house"           json:"house"`
 	Flat      string    `db:"flat"            json:"flat"`
 	Square    string    `db:"square"          json:"square"`
+	Floor     string    `db:"floor"           json:"floor"`
 }

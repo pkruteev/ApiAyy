@@ -20,7 +20,8 @@ func PrivateRoutes(a *fiber.App) {
 
 	// Routes for GET method:
 	route.Get("/myusers", middleware.JWTProtected(), controllers.GetMyUsers)
-	route.Get("/companies", middleware.JWTProtected(), controllers.GetCompanies)
+	// route.Get("/companies", middleware.JWTProtected(), controllers.GetCompanies)
+	//route.Get("/companies/:bd", middleware.JWTProtected(), controllers.GetCompanies)
 
 	// // Routes for PUT method:
 	// route.Put("/book", middleware.JWTProtected(), controllers.UpdateBook) // update one book by ID

@@ -9,69 +9,80 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// Login контроллер для входа пользователя в систему.
 func Login(c *fiber.Ctx) error {
-	// Создаем новую структуру для получения данных пользователя.
+	// Создаем структуру для получения данных пользователя
 	loginData := &models.UserType{}
 	if err := c.BodyParser(loginData); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": true,
-			"msg":   err.Error(),
+			"msg":   "Неверный формат данных: " + err.Error(),
 		})
 	}
 
-	queries, err := database.DBConnectionQueries("main")
+	// Создаем соединение с базой данных main
+	db_main, err := database.DBConnectionQueries("main")
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": true,
-			"msg":   err.Error(),
+			"msg":   "Ошибка подключения к базе данных: " + err.Error(),
 		})
 	}
 
-	// Получаем пользователя из базы данных по email.
-	user, err := queries.GetUserByEmail(loginData.UserEmail)
+	// Получаем пользователя из базы данных по email
+	user, err := db_main.GetUserByEmail(loginData.UserEmail)
 	if err != nil {
-		fmt.Println("Пользователь не найден по данному email:", loginData.UserEmail)
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": true,
-			"msg":   "Неправильный логин или пароль",
+			"msg":   "Ошибка при получении пользователя: " + err.Error(),
 		})
 	}
 
-	// Сравниваем введенный пароль с сохраненным хешем
+	// Если пользователь не найден (UserID == 0), возвращаем данные для регистрации
+	if user.UserID == 0 {
+		return c.Status(fiber.StatusOK).JSON(fiber.Map{
+			"error": false,
+			"user":  user, // Возвращаем структуру с email для регистрации
+		})
+	}
+
+	// Сравниваем введенный пароль с хешем из базы данных
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(loginData.Password))
 	if err != nil {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": true,
-			"msg":   "Неправильный логин или пароль",
+			"msg":   "Неправильный пароль",
+		})
+	}
+
+	// Получаем права пользователя из таблицы Rights
+	userRights, err := db_main.GetUserRightsById(user.UserID)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": true,
+			"msg":   "Ошибка при получении прав пользователя: " + err.Error(),
 		})
 	}
 
 	// Генерация JWT токена
-	token, err := GetNewAccessToken(user.UserID) // Используйте идентификатор пользователя
+	token, err := GetNewAccessToken(user.UserID)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": true,
 			"msg":   "Ошибка генерации токена: " + err.Error(),
 		})
 	}
-	// Получаем пользователя из двух таблиц для отправки
-	userResponse, err := queries.GetUserForResponsById(user.UserID)
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": true,
-			"msg":   "не удалось получить пользователя",
-		})
-	}
-	// Удаляем пароль из ответа
-	// userResponse.Password = ""
-	// user.CreatedUser = ""
 
-	// Возвращаем статус 200 OK, данные пользователя и токен
+	// Удаляем пароль из ответа
+	user.Password = ""
+
+	// Логируем вход пользователя (без чувствительных данных)
+	fmt.Printf("Login user: %+v\n", user.UserEmail)
+
+	// Возвращаем полные данные пользователя клиенту
 	return c.JSON(fiber.Map{
-		"error": false,
-		"msg":   "Успешный вход в систему",
-		"token": token,
-		"user":  userResponse,
+		"error":  false,
+		"token":  token,
+		"user":   user,
+		"rights": userRights,
 	})
 }

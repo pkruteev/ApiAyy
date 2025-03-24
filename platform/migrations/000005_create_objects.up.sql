@@ -13,15 +13,17 @@ END $$;
 CREATE TABLE IF NOT EXISTS public.objects
 (
     object_id       integer NOT NULL DEFAULT nextval('public.objects_object_id_seq'::regclass),
-    created_at      TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    created_ob      TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     typereal        character varying(55),
     city            character varying(255),
+    street          character varying(255),
     house           character varying(55),
     flat            character varying(55),
     square          character varying(55),
+    floor           character varying(55),
     company_id      integer, 
-    CONSTRAINT objects_pkey PRIMARY KEY (object_id),
-    CONSTRAINT fk_companies_id FOREIGN KEY (company_id) REFERENCES public.companies(company_id) 
+    CONSTRAINT pk_object_id PRIMARY KEY (object_id),
+    CONSTRAINT fk_company_id FOREIGN KEY (company_id) REFERENCES public.companies(company_id) 
 )
 TABLESPACE pg_default;
 

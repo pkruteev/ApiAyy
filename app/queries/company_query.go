@@ -12,7 +12,7 @@ type CompanyQueries struct {
 
 // GetCompanies method for getting all companies.
 func (q *CompanyQueries) GetCompanies() ([]models.Company, error) {
-	// Определяем переменную для хранения пользователей.
+	// Определяем переменную для хранения компаний.
 	companies := []models.Company{}
 
 	// Строка запроса для таблицы companies.
@@ -21,38 +21,39 @@ func (q *CompanyQueries) GetCompanies() ([]models.Company, error) {
 	// Используем Select для получения всех строк.
 	err := q.Select(&companies, query)
 	if err != nil {
-		return companies, err
+		return nil, err // Возвращаем ошибку, если запрос не удался
 	}
-	// log.Printf("All company, companies)
+
+	// Если запрос выполнен успешно, возвращаем список компаний (пустой или нет).
 	return companies, nil
 }
 
 // GetCompany method for getting one company by given ID.
-func (q *CompanyQueries) GetCompany(company_id uint) (models.Company, error) {
+func (q *CompanyQueries) GetCompany() ([]models.Company, error) {
 	// Define company variable.
-	company := models.Company{}
+	companies := []models.Company{}
 
 	// Define query string.
-	query := `SELECT * FROM company WHERE id_company = $1`
+	query := `SELECT * FROM companies`
 
 	// Send query to database.
-	err := q.Get(&company, query, company_id)
+	err := q.Select(&companies, query)
 	if err != nil {
 		// Return empty object and error.
-		return company, err
+		return companies, err
 	}
 
 	// Return query result.
-	return company, nil
+	return companies, nil
 }
 
 // CreateCompany method for creating Company by given Company object.
 func (q *CompanyQueries) CreateCompany(b *models.Company) error {
 	// Определите строку запроса, исключив поле Company_Id.
-	query := "INSERT INTO company (created_at, status_company, company_name, inn, kpp, ogrn, ur_adress, mail_adress, phone, email, director) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)"
+	query := "INSERT INTO companies (contragent, status, name, inn, kpp, ogrn, data_ogrn, ogrnip, data_ogrnip, ur_address, mail_address, phone, email, director) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)"
 
 	// Отправьте запрос в базу данных.
-	_, err := q.Exec(query, b.CreatedAt, b.Company_status, b.Company_name, b.Inn, b.Kpp, b.Ogrn, b.Ur_adress, b.Mail_adress, b.Phone, b.Email, b.Director)
+	_, err := q.Exec(query, b.Contragent, b.Status, b.Name, b.Inn, b.Kpp, b.Ogrn, b.DataOgrn, b.Ogrnip, b.DataOgrnip, b.UrAddress, b.MailAddress, b.Phone, b.Email, b.Director)
 	if err != nil {
 		// Вернуть только ошибку.
 		return err
@@ -64,16 +65,15 @@ func (q *CompanyQueries) CreateCompany(b *models.Company) error {
 // UpdateCompany method for updating company by given Company object.
 func (q *CompanyQueries) UpdateCompany(company_id, b *models.Company) error {
 	// Define query string.
-	query := `UPDATE company SET company_status = $2, company_name = $3, inn = $4, kpp = $5, ogrn = $6, ur_adress = $7, mail_adress = $8, phone = $9, email = $10, director = $11 WHERE company_id = $1`
+	query := `UPDATE company SET contragent = $2, status = $3, name = $4, inn = $5, kpp = $6, ogrn = $7, data_ogrn = $8, ogrnip= $9, data_ogrnip= $10, ur_address = $11, mail_address = $12, phone = $13, email = $14, director = $15 WHERE company_id = $1`
 
 	// Send query to database.
-	_, err := q.Exec(query, b.Company_Id, b.Company_status, b.Company_name, b.Inn, b.Kpp, b.Ogrn, b.Ur_adress, b.Mail_adress, b.Phone, b.Email, b.Director)
+	_, err := q.Exec(query, b.Contragent, b.Status, b.Name, b.Inn, b.Kpp, b.Ogrn, b.DataOgrn, b.Ogrnip, b.DataOgrnip, b.UrAddress, b.MailAddress, b.Phone, b.Email, b.Director)
 	if err != nil {
 		// Return only error.
 		return err
 	}
 
-	// This query returns nothing.
 	return nil
 }
 
