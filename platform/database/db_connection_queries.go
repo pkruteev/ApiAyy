@@ -1,14 +1,25 @@
 package database
 
-import "ApiAyy/app/queries"
+import (
+	"ApiAyy/app/queries"
+
+	"github.com/jmoiron/sqlx"
+)
 
 // Queries struct for collect all app queries.
 type Queries struct {
-	// *queries.BookQueries // load queries from Book model
 	*queries.UserQueries
 	*queries.CompanyQueries
 	*queries.MyUsersQueries
-	// *queries.DataBaseQueries
+	DB *sqlx.DB
+}
+
+// Close closes the database connection
+func (q *Queries) Close() error {
+	if q.DB != nil {
+		return q.DB.Close()
+	}
+	return nil
 }
 
 // OpenDBConnection func for opening database connection.
@@ -24,7 +35,5 @@ func DBConnectionQueries(db_name string) (*Queries, error) {
 		UserQueries:    &queries.UserQueries{DB: db_main},
 		CompanyQueries: &queries.CompanyQueries{DB: db_main},
 		MyUsersQueries: &queries.MyUsersQueries{DB: db_main},
-		// DataBaseQueries: &queries.DataBaseQueries{DB: db_main},
 	}, nil
-
 }

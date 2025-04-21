@@ -1,9 +1,40 @@
 package utils
 
 import (
+	"reflect"
+	"strconv"
+
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 )
+
+func UserIdValidator() *validator.Validate {
+	validate := validator.New()
+
+	// Custom validation for UserId (positive integer)
+	_ = validate.RegisterValidation("userId", func(fl validator.FieldLevel) bool {
+		field := fl.Field()
+
+		// Проверяем, что это целое число (int, int64 и т.д.)
+		switch field.Kind() {
+		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+			return field.Int() > 0 // Должно быть > 0
+		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+			return true // Беззнаковые целые всегда >= 0
+		case reflect.String:
+			// Если пришла строка (например, из JSON), пытаемся преобразовать в int
+			val, err := strconv.Atoi(field.String())
+			if err != nil {
+				return false
+			}
+			return val > 0
+		default:
+			return false // Все остальные типы недопустимы
+		}
+	})
+
+	return validate
+}
 
 // NewValidator func for create a new validator for model fields.
 func NewValidator() *validator.Validate {

@@ -4,7 +4,6 @@ import (
 	"ApiAyy/app/models"
 	"ApiAyy/platform/database"
 	"log"
-	"strconv"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -49,6 +48,11 @@ func GetCompanies(c *fiber.Ctx) error {
 }
 
 // AddCompany добавляет новую компанию в базу данных.
+type CreateCompanyRequest struct {
+	BDUsed  string         `json:"bd_used"` // только дополнительные поля
+	Company models.Company `json:"company"` // основная модель
+}
+
 func AddCompany(c *fiber.Ctx) error {
 	// Проверка токена
 	if _, err := ValidateToken(c); err != nil {
@@ -57,25 +61,10 @@ func AddCompany(c *fiber.Ctx) error {
 			"msg":   err.Error(),
 		})
 	}
+	// Проверяем что пользователь - Администратор
 
-	company := &models.Company{}
-
-	// Структура для парсинга bd_used
-	type RequestBody struct {
-		BDUsed int `json:"bd_used"`
-	}
-
-	var body RequestBody
-
-	// Парсим bd_used
-	if err := c.BodyParser(&body); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": true,
-			"msg":   "Неверный формат данных: " + err.Error(),
-		})
-	}
-
-	// Парсим company
+	// Парсим данные сразу в models.Company
+	var company models.Company
 	if err := c.BodyParser(&company); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": true,
@@ -83,33 +72,38 @@ func AddCompany(c *fiber.Ctx) error {
 		})
 	}
 
-	// Преобразуем bd_used в строку
-	bd := strconv.Itoa(body.BDUsed)
+	// bd_used
+	var requestData struct {
+		BDUsed string `json:"bd_used"`
+	}
+	if err := c.BodyParser(&requestData); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": true,
+			"msg":   "Неверный формат bd_used: " + err.Error(),
+		})
+	}
+	// Проверяем наличие записи в Holding таблицы RIGHTS
 
-	// Подключаемся к базе данных
-	db, err := database.DBConnectionQueries(bd)
+	// Подключаемся к БД
+	db, err := database.DBConnectionQueries(requestData.BDUsed)
 	if err != nil {
-		log.Printf("Ошибка подключения к базе данных %s: %v", bd, err)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": true,
-			"msg":   "Ошибка подключения к базе данных: " + err.Error(),
+			"msg":   "Ошибка подключения к БД: " + err.Error(),
 		})
 	}
 
-	// Вызываем метод CreateCompany
-	err = db.CreateCompany(company)
-	if err != nil {
-		log.Printf("Ошибка при создании компании: %v", err)
+	// Создаем компанию
+	if err := db.CreateCompany(&company); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": true,
 			"msg":   "Ошибка при создании компании: " + err.Error(),
 		})
 	}
 
-	log.Println("Компания успешно создана!")
-
 	return c.JSON(fiber.Map{
-		"error":  false,
-		"result": "Компания успешно создана!",
+		"success": true,
+		"data":    company.CompanyId,
+		"error":   false,
 	})
 }

@@ -71,16 +71,32 @@ func AfterPay(c *fiber.Ctx) error {
 
 	log.Println("Таблицы успешно созданы!")
 
-	// Приведение типов для userId.
-	userIdUint64, err := strconv.ParseUint(userId, 10, 32)
+	// Приведение типов для userId
+	// userIdUint, err := strconv.ParseUint(userId, 10, 32)
+	// if err != nil {
+	// 	return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+	// 		"error": true,
+	// 		"msg":   "Некорректный userId: " + err.Error(),
+	// 	})
+	// }
+
+	// Преобразуем строку userId в uint
+	userIdUint64, err := strconv.ParseUint(userId, 10, 32) // 32 бита для соответствия uint
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": true,
-			"msg":   "Ошибка преобразования userId в uint: " + err.Error(),
+			"msg":   "Некорректный ID пользователя",
 		})
 	}
 
+	// Явное преобразование в uint (32-битное беззнаковое целое)
 	userIdUint := uint(userIdUint64)
+
+	// Если нужно гарантированно получить строку без лишних символов:
+	userIdString := strconv.FormatUint(userIdUint64, 10)
+
+	// Преобразование в uint
+	// userIdUint := uint(userIdUint)
 
 	// Подключение к основной базе данных.
 	db_main_queries, err := database.DBConnectionQueries("main")
@@ -99,7 +115,7 @@ func AfterPay(c *fiber.Ctx) error {
 			"msg":   "Ошибка при получении прав пользователя: " + err.Error(),
 		})
 	}
-
+	log.Printf("userRights: %+v\n", userRights)
 	// Проверяем, что пользователь имеет права admin и только в одной базе данных
 	hasAdminRights := false
 	for _, right := range userRights {
@@ -118,7 +134,7 @@ func AfterPay(c *fiber.Ctx) error {
 	}
 
 	// Запись в поле bd_used имени основной бд для admin.
-	err = db_main_queries.SetupUserBd(userIdUint, userIdUint)
+	err = db_main_queries.SetupUserBd(userIdUint, userIdString)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": true,
@@ -127,7 +143,7 @@ func AfterPay(c *fiber.Ctx) error {
 	}
 
 	// Записываем пользовательские права admin в БД.
-	err = db_main_queries.SetupUserRight(userIdUint, userIdUint, "admin")
+	err = db_main_queries.SetupUserRight(userIdUint, userIdString, "admin")
 	if err != nil {
 		return c.Status(fiber.StatusConflict).JSON(fiber.Map{
 			"error": true,
@@ -146,8 +162,8 @@ func AfterPay(c *fiber.Ctx) error {
 
 	// Формируем ответ.
 	response := fiber.Map{
-		"message":    fmt.Sprintf("База данных '%s' успешно создана и подключена", userId),
-		"user_right": updatedUserRights,
+		"message": fmt.Sprintf("База данных '%s' успешно создана и подключена", userId),
+		"rights":  updatedUserRights,
 	}
 
 	return c.Status(fiber.StatusOK).JSON(response)

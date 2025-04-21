@@ -18,7 +18,7 @@ func PublicRoutes(a *fiber.App) {
 	// app.Use(jwtware.New(jwtware.Config{
 	// 	SigningKey: jwtware.SigningKey{Key: []byte("secret")},
 	// }))
-	route.Get("/companies/:bd", controllers.GetCompanies)
+	// route.Get("/companies/:bd", controllers.GetCompanies)
 	route.Get("/health", func(c *fiber.Ctx) error {
 		return c.JSON(fiber.Map{
 			"status":  "OK",

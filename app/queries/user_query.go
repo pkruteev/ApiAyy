@@ -4,6 +4,8 @@ import (
 	"ApiAyy/app/models"
 	"database/sql"
 	"fmt"
+	"log"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -16,9 +18,9 @@ type UserQueries struct {
 func (q *UserQueries) RegisterUser(b *models.UserType) error {
 
 	// Строка запроса, без поля UserID и CreatedUser.
-	query := "INSERT INTO users ( bd_used, first_name, patronymic_name, last_name, user_email, user_phone, password) VALUES ($1, $2, $3, $4, $5, $6, $7)"
+	query := "INSERT INTO users ( bd_used, first_name, patronymic_name, last_name, user_email, email_verification, user_phone, password) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)"
 
-	_, err := q.Exec(query, b.BdUsed, b.FirstName, b.PatronymicName, b.LastName, b.UserEmail, b.UserPhone, b.Password)
+	_, err := q.Exec(query, b.BdUsed, b.FirstName, b.PatronymicName, b.LastName, b.UserEmail, b.EmailVerification, b.UserPhone, b.Password)
 	if err != nil {
 		return err
 	}
@@ -26,7 +28,7 @@ func (q *UserQueries) RegisterUser(b *models.UserType) error {
 	return nil
 }
 
-func (q *UserQueries) SetupUserRight(id uint, userBd uint, role string) error {
+func (q *UserQueries) SetupUserRight(id uint, userBd string, role string) error {
 	// Проверяем, что роль является допустимой
 	// validRoles := map[string]bool{
 	// 	"admin":    true,
@@ -40,8 +42,7 @@ func (q *UserQueries) SetupUserRight(id uint, userBd uint, role string) error {
 
 	// Проверяем, существует ли уже такая запись
 	existsQuery := `
-		 SELECT 
-			  COUNT(*) AS rights_count
+		 SELECT COUNT(*) AS rights_count
 		 FROM rights
 		 WHERE user_id = $1 AND user_bd = $2 AND user_role = $3
 	`
@@ -49,12 +50,12 @@ func (q *UserQueries) SetupUserRight(id uint, userBd uint, role string) error {
 	var rightsCount int
 	err := q.QueryRow(existsQuery, id, userBd, role).Scan(&rightsCount)
 	if err != nil {
-		return fmt.Errorf("ошибка проверки существования записи: %w", err)
+		return fmt.Errorf("ошибка проверки прав: %w", err)
 	}
 
 	// Если права уже существуют, возвращаем ошибку
 	if rightsCount > 0 {
-		return fmt.Errorf("пользователь с ID %d уже имеет права %s для базы данных %d", id, role, userBd)
+		return fmt.Errorf("пользователь с ID %d уже имеет права %s", id, role)
 	}
 
 	// Проверяем, является ли пользователь администратором в любой базе данных
@@ -75,31 +76,33 @@ func (q *UserQueries) SetupUserRight(id uint, userBd uint, role string) error {
 		return fmt.Errorf("пользователь с ID %d уже является администратором в другой базе данных", id)
 	}
 
-	// Если пользователь пытается стать администратором, проверяем, что он не имеет прав в других базах данных
+	// Если пользователь пытается стать администратором, проверяем, что его гнт в таблице rights
 	if role == "admin" {
-		otherRightsCheckQuery := `
-			  SELECT COUNT(*) 
-			  FROM rights 
-			  WHERE user_id = $1 AND user_bd != $2
-		 `
+		// Проверяем наличие любых прав у пользователя
+		rightsCheckQuery := `
+			 SELECT COUNT(*) 
+			 FROM rights 
+			 WHERE user_id = $1
+		`
 
-		var otherRightsCount int
-		err = q.QueryRow(otherRightsCheckQuery, id, userBd).Scan(&otherRightsCount)
+		var rightsCount int
+		err = q.QueryRow(rightsCheckQuery, id).Scan(&rightsCount)
 		if err != nil {
-			return fmt.Errorf("ошибка проверки прав в других базах данных: %w", err)
+			return fmt.Errorf("ошибка проверки прав пользователя: %w", err)
 		}
 
-		// Если пользователь имеет права в других базах данных, он не может стать администратором
-		if otherRightsCount > 0 {
-			return fmt.Errorf("пользователь с ID %d имеет права в других базах данных и не может стать администратором", id)
+		if rightsCount > 0 {
+			return fmt.Errorf("пользователь с ID %d уже имеет права в системе", id)
 		}
 	}
-
-	// Добавляем новые права
-	query := "INSERT INTO rights (user_id, user_bd, holding, user_role) VALUES ($1, $2, $3, $4)"
-	_, err = q.Exec(query, id, userBd, "", role) // holding передаётся как пустая строка
+	// Если все проверки пройдены, добавляем права
+	insertQuery := `
+		 INSERT INTO rights (user_id, user_bd, holding, user_role)
+		 VALUES ($1, $2, $3, $4)
+	`
+	_, err = q.Exec(insertQuery, id, userBd, "", role)
 	if err != nil {
-		return fmt.Errorf("ошибка при установке прав пользователя: %w", err)
+		return fmt.Errorf("ошибка при добавлении прав: %w", err)
 	}
 
 	return nil
@@ -140,13 +143,13 @@ func (q *UserQueries) GetUserByEmail(UserEmail string) (models.UserType, error) 
 }
 
 func (q *UserQueries) GetUserRightsById(UserID uint) ([]models.UserRights, error) {
-	// Определяем переменную для хранения массива прав пользователя.
+	log.Printf("Начало выполнения GetUserRightsById для UserID: %d", UserID)
 	var rights []models.UserRights
 
-	// Определяем строку запроса.
 	query := `
 		 SELECT 
-			  rights_id, 
+			  rights_id,
+			  user_id,
 			  created_rights, 
 			  user_bd, 
 			  holding, 
@@ -155,18 +158,28 @@ func (q *UserQueries) GetUserRightsById(UserID uint) ([]models.UserRights, error
 		 WHERE user_id = $1
 	`
 
-	// Выполняем запрос и сканируем результат в переменную rights.
+	log.Printf("Выполнение SQL-запроса:\n%s\nС параметрами: UserID=%d", query, UserID)
+
+	startTime := time.Now()
 	err := q.Select(&rights, query, UserID)
+	duration := time.Since(startTime)
+
+	log.Printf("Запрос выполнен за %v", duration)
+
 	if err != nil {
 		if err == sql.ErrNoRows {
-			// Если права не найдены, возвращаем пустой массив и nil (или ошибку, если это критично).
+			log.Printf("Права не найдены для UserID: %d", UserID)
 			return []models.UserRights{}, nil
 		}
-		// Возвращаем ошибку, если что-то пошло не так.
+		log.Printf("Ошибка при выполнении запроса для UserID %d: %v", UserID, err)
 		return nil, fmt.Errorf("ошибка при получении прав пользователя: %w", err)
 	}
 
-	// Возвращаем массив прав пользователя.
+	log.Printf("Успешно получено %d прав для UserID: %d", len(rights), UserID)
+	if len(rights) > 0 {
+		log.Printf("Пример первого элемента: %+v", rights[0])
+	}
+
 	return rights, nil
 }
 
@@ -280,28 +293,45 @@ func (q *UserQueries) GetUserRightsById(UserID uint) ([]models.UserRights, error
 
 // Установка значения поля user_bd -
 // бд с которой сейчас работает пользователь
-func (q *UserQueries) SetupUserBd(id uint, user_bd uint) error {
-	// Проверяем существование значения bd
-	var _bd int
+func (q *UserQueries) SetupUserBd(id uint, user_bd string) error {
+	var currentBd string
 
 	query := "SELECT bd_used FROM users WHERE user_id = $1"
-	err := q.Get(&_bd, query, id)
+	err := q.Get(&currentBd, query, id)
 
 	if err != nil {
-		return fmt.Errorf("ошибка при проверке существования bd: %w", err)
+		if err == sql.ErrNoRows {
+			return fmt.Errorf("пользователь с id %d не найден", id)
+		}
+		return fmt.Errorf("ошибка при проверке bd_used: %w", err)
 	}
 
-	// Если значение bd уже существует и больше 0 и равно id, выходим из функции
-	if _bd > 0 && _bd == int(id) {
+	if currentBd == user_bd {
 		return nil
 	}
 
 	updateQuery := "UPDATE users SET bd_used = $1 WHERE user_id = $2"
 	_, err = q.Exec(updateQuery, user_bd, id)
-
 	if err != nil {
 		return fmt.Errorf("ошибка при обновлении bd_used: %w", err)
 	}
 
 	return nil
+}
+
+// Проверяем является ли User администратором
+func (q *UserQueries) IsAdmin(userID uint) (bool, error) {
+	adminCheckQuery := `
+		 SELECT COUNT(*) > 0
+		 FROM rights 
+		 WHERE user_id = $1 AND user_bd = $1 AND user_role = 'admin'
+	`
+
+	var isAdmin bool
+	err := q.QueryRow(adminCheckQuery, userID).Scan(&isAdmin)
+	if err != nil {
+		return false, fmt.Errorf("ошибка проверки прав администратора: %w", err)
+	}
+
+	return isAdmin, nil
 }

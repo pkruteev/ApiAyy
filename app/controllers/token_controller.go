@@ -17,6 +17,7 @@ func GetNewAccessToken(userID uint) (string, error) {
 	return token, nil // Возвращаем сгенерированный токен
 }
 
+// проверка токена для всех эндпоинтов
 func ValidateToken(c *fiber.Ctx) (uint, error) {
 	// Получаем текущее время.
 	now := time.Now().Unix()

@@ -12,7 +12,6 @@ func PrivateRoutes(a *fiber.App) {
 	route := a.Group("/api")
 
 	// Routes for POST method:
-	// route.Post("/book", middleware.JWTProtected(), controllers.CreateBook)
 	// route.Post("/company", middleware.JWTProtected(), controllers.CreateCompany)
 	route.Post("/afterpay", middleware.JWTProtected(), controllers.AfterPay)
 	route.Post("/addmyuser", middleware.JWTProtected(), controllers.AddMyuser)
@@ -20,6 +19,7 @@ func PrivateRoutes(a *fiber.App) {
 
 	// Routes for GET method:
 	route.Get("/myusers", middleware.JWTProtected(), controllers.GetMyUsers)
+	route.Get("/companies/:bd", middleware.JWTProtected(), controllers.GetCompanies)
 	// route.Get("/companies", middleware.JWTProtected(), controllers.GetCompanies)
 	//route.Get("/companies/:bd", middleware.JWTProtected(), controllers.GetCompanies)
 
@@ -27,5 +27,6 @@ func PrivateRoutes(a *fiber.App) {
 	// route.Put("/book", middleware.JWTProtected(), controllers.UpdateBook) // update one book by ID
 
 	// // Routes for DELETE method:
-	// route.Delete("/book", middleware.JWTProtected(), controllers.DeleteBook) // delete one book by ID
+	// route.Delete("/book", middleware.JWTProtected(), controllers.DeleteBook)
+	route.Delete("/myusers", middleware.JWTProtected(), controllers.DeleteMyUsers)
 }

@@ -27,11 +27,10 @@ CREATE TABLE IF NOT EXISTS public.statements
     author_id            integer,
 
     CONSTRAINT pk_statement_id PRIMARY KEY (statement_id),
-    CONSTRAINT fk_rschet_id FOREIGN KEY (rschet_id) REFERENCES public.accounts(rschet_id) 
-    CONSTRAINT fk_r_schet FOREIGN KEY (r_schet) REFERENCES public.accounts(r_schet) 
-    CONSTRAINT fk_company_id FOREIGN KEY (company_id) REFERENCES public.companies(company_id) 
+    CONSTRAINT fk_rschet_id FOREIGN KEY (rschet_id) REFERENCES public.accounts(rschet_id), 
+    CONSTRAINT fk_r_schet FOREIGN KEY (r_schet) REFERENCES public.accounts(r_schet),
+    CONSTRAINT fk_company_id FOREIGN KEY (company_id) REFERENCES public.companies(company_id), 
     CONSTRAINT fk_contragent_id FOREIGN KEY (contragent_id) REFERENCES public.companies(company_id) 
-    CONSTRAINT fk_author_id FOREIGN KEY (author_id) REFERENCES public.users(user_id) 
 )
 
 TABLESPACE pg_default;

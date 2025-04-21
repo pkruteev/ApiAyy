@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS public.r_schets
 (
     r_schet_id       integer NOT NULL DEFAULT nextval('r_schets_r_schet_id_seq'::regclass),
     created_schet    TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    n_schet          character varying(55),
+    r_schet          character varying(55) UNIQUE,
     bank_name        character varying(255),
     bank_bic         character varying(55),
     kor_schet        character varying(55),
