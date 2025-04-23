@@ -10,8 +10,8 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-// GetCompanies возвращает список всех компаний из указанной базы данных.
-func GetCompanies(c *fiber.Ctx) error {
+// GetObjects возвращает список всех объектов из указанной базы данных.
+func GetObjects(c *fiber.Ctx) error {
 	// Получаем имя базы данных из параметра запроса
 	bd := c.Params("bd")
 	if bd == "" {
@@ -32,31 +32,26 @@ func GetCompanies(c *fiber.Ctx) error {
 		})
 	}
 
-	// Получаем компании из таблицы companies
-	companies, err := db.GetCompanies()
+	// Получаем объекты из таблицы объектов
+	objects, err := db.GetObjects()
 	if err != nil {
-		log.Printf("Ошибка при получении компаний: %v", err)
+		log.Printf("Ошибка при получении объектов: %v", err)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": true,
-			"msg":   "Ошибка при получении компаний: " + err.Error(),
+			"msg":   "Ошибка при получении объектов: " + err.Error(),
 		})
 	}
 
-	// Возвращаем список компаний в формате JSON (пустой или нет)
+	// Возвращаем список объектов в формате JSON
 	return c.JSON(fiber.Map{
 		"success": true,
 		"error":   false,
-		"data":    companies,
+		"data":    objects,
 	})
 }
 
-// AddCompany добавляет новую компанию в базу данных.
-type CreateCompanyRequest struct {
-	BDUsed  string         `json:"bd_used"` // только дополнительные поля
-	Company models.Company `json:"company"` // основная модель
-}
-
-func AddCompany(c *fiber.Ctx) error {
+// AddObject добавляет новый объект недвижимости в базу данных.
+func AddObject(c *fiber.Ctx) error {
 	// 1. Аутентификация и проверка прав
 	userId, err := ValidateToken(c)
 	if err != nil {
@@ -92,7 +87,7 @@ func AddCompany(c *fiber.Ctx) error {
 
 	// 3. Парсинг входящих данных
 	var request struct {
-		models.Company
+		models.Objects
 		BDUsed string `json:"bd_used"`
 	}
 	if err := c.BodyParser(&request); err != nil {
@@ -102,60 +97,30 @@ func AddCompany(c *fiber.Ctx) error {
 		})
 	}
 
-	// 4. Записываем имя компании в holding (из прав пользователя)
-	rights, err := dbMain.GetUserRights(userId)
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": true,
-			"msg":   "Ошибка получения прав пользователя: " + err.Error(),
-		})
-	}
-
-	if rights == nil {
-		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
-			"error": true,
-			"msg":   "Права пользователя не найдены",
-		})
-	}
-
-	if rights.Holding == "" {
-		// Если holding не указан, используем название компании
-		rights.Holding = request.Company.Name
-		if err := dbMain.UpdateUserHolding(userId, rights.Holding); err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"error": true,
-				"msg":   "Ошибка обновления holding: " + err.Error(),
-			})
-		}
-	}
-
 	targetDB, err := database.DBConnectionQueries(request.BDUsed)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": true,
-			"msg":   "Ошибка подключения к целевой БД: " + err.Error(),
+			"msg":   "Ошибка подключения к БД: " + err.Error(),
 		})
 	}
 
-	if err := targetDB.CreateCompany(&request.Company); err != nil {
+	if err := targetDB.CreateObject(&request.Objects); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": true,
-			"msg":   "Ошибка создания компании: " + err.Error(),
+			"msg":   "Ошибка создания объекта: " + err.Error(),
 		})
 	}
 
 	return c.JSON(fiber.Map{
 		"success": true,
-		"data": fiber.Map{
-			"holding": rights.Holding,
-		},
-		"error": false,
+		"error":   false,
+		"msg":     "Объект успешно добавлен",
 	})
 }
 
-// DeleteCompany удаляет компании по списку ID
-func DeleteCompanies(c *fiber.Ctx) error {
-
+// DeleteObjects удаляет объекты по списку ID
+func DeleteObjects(c *fiber.Ctx) error {
 	// 1. Аутентификация и проверка прав
 	userId, err := ValidateToken(c)
 	if err != nil {
@@ -205,7 +170,7 @@ func DeleteCompanies(c *fiber.Ctx) error {
 	if len(request.IDs) == 0 {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": true,
-			"msg":   "Массив companyIds не может быть пустым",
+			"msg":   "Массив Ids не может быть пустым",
 		})
 	}
 
@@ -213,13 +178,13 @@ func DeleteCompanies(c *fiber.Ctx) error {
 		if id == 0 {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 				"error": true,
-				"msg":   "ID компании не может быть нулевым",
+				"msg":   "ID объекта не может быть нулевым",
 			})
 		}
 	}
 
 	// Подключение к БД администратора
-	userIdStr := strconv.FormatUint(uint64(userId), 10) // Преобразование uint в string
+	userIdStr := strconv.FormatUint(uint64(userId), 10)
 	db, err := database.DBConnectionQueries(userIdStr)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -228,36 +193,36 @@ func DeleteCompanies(c *fiber.Ctx) error {
 		})
 	}
 
-	// Удаление компаний
+	// Удаление объектов
 	failedDeletions := make([]uint, 0)
 	successCount := 0
 
-	for _, companyID := range request.IDs {
-		// Проверка существования компании
-		exists, err := db.CompanyExists(companyID)
+	for _, objectID := range request.IDs {
+		// Проверка существования объекта
+		exists, err := db.ObjectExists(objectID)
 		if err != nil {
-			log.Printf("Ошибка проверки существования компании %d: %v", companyID, err)
-			failedDeletions = append(failedDeletions, companyID)
+			log.Printf("Ошибка проверки существования объекта %d: %v", objectID, err)
+			failedDeletions = append(failedDeletions, objectID)
 			continue
 		}
 
 		if !exists {
-			log.Printf("Компания с ID %d не найдена", companyID)
-			failedDeletions = append(failedDeletions, companyID)
+			log.Printf("Объект с ID %d не найден", objectID)
+			failedDeletions = append(failedDeletions, objectID)
 			continue
 		}
 
-		// Удаление компании
-		if err := db.DeleteCompany(companyID); err != nil {
-			log.Printf("Ошибка удаления компании %d: %v", companyID, err)
-			failedDeletions = append(failedDeletions, companyID)
+		// Удаление объекта
+		if err := db.DeleteObject(objectID); err != nil {
+			log.Printf("Ошибка удаления объекта %d: %v", objectID, err)
+			failedDeletions = append(failedDeletions, objectID)
 			continue
 		}
 
 		successCount++
 	}
 
-	// 6. Формирование ответа
+	// Формирование ответа
 	response := fiber.Map{
 		"success":      true,
 		"deletedCount": successCount,
@@ -266,15 +231,15 @@ func DeleteCompanies(c *fiber.Ctx) error {
 
 	if len(failedDeletions) > 0 {
 		response["failed"] = failedDeletions
-		response["msg"] = fmt.Sprintf("Удалено %d из %d компаний", successCount, len(request.IDs))
+		response["msg"] = fmt.Sprintf("Удалено %d из %d объектов", successCount, len(request.IDs))
 	} else {
-		response["msg"] = "Все компании успешно удалены"
+		response["msg"] = "Все объекты успешно удалены"
 	}
 
 	if successCount == 0 {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 			"error":  true,
-			"msg":    "Не удалось удалить ни одной компании",
+			"msg":    "Не удалось удалить ни одного объекта",
 			"failed": failedDeletions,
 		})
 	}

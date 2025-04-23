@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
-	"time"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -142,8 +141,9 @@ func (q *UserQueries) GetUserByEmail(UserEmail string) (models.UserType, error) 
 	return user, nil
 }
 
-func (q *UserQueries) GetUserRightsById(UserID uint) ([]models.UserRights, error) {
-	log.Printf("Начало выполнения GetUserRightsById для UserID: %d", UserID)
+// Функция для получения прав нескольких пользователей
+func (q *UserQueries) GetUserRightsById(userID uint) ([]models.UserRights, error) {
+	log.Printf("Начало выполнения GetUserRightsById для userID: %d", userID)
 	var rights []models.UserRights
 
 	query := `
@@ -155,32 +155,56 @@ func (q *UserQueries) GetUserRightsById(UserID uint) ([]models.UserRights, error
 			  holding, 
 			  user_role 
 		 FROM rights 
-		 WHERE user_id = $1
-	`
+		 WHERE user_id = $1`
 
-	log.Printf("Выполнение SQL-запроса:\n%s\nС параметрами: UserID=%d", query, UserID)
-
-	startTime := time.Now()
-	err := q.Select(&rights, query, UserID)
-	duration := time.Since(startTime)
-
-	log.Printf("Запрос выполнен за %v", duration)
-
+	// Используем Select для получения нескольких записей
+	err := q.Select(&rights, query, userID)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			log.Printf("Права не найдены для UserID: %d", UserID)
+			log.Printf("Права не найдены для userID: %d", userID)
 			return []models.UserRights{}, nil
 		}
-		log.Printf("Ошибка при выполнении запроса для UserID %d: %v", UserID, err)
+		log.Printf("Ошибка при выполнении запроса для userID %d: %v", userID, err)
 		return nil, fmt.Errorf("ошибка при получении прав пользователя: %w", err)
 	}
 
-	log.Printf("Успешно получено %d прав для UserID: %d", len(rights), UserID)
+	log.Printf("Успешно получено %d прав для userID: %d", len(rights), userID)
 	if len(rights) > 0 {
-		log.Printf("Пример первого элемента: %+v", rights[0])
+		log.Printf("Первая запись прав: %+v", rights[0])
 	}
 
 	return rights, nil
+}
+
+// Функция получения прав для одного пользователя
+func (q *UserQueries) GetUserRights(userID uint) (*models.UserRights, error) {
+	log.Printf("Получение прав для userID: %d", userID)
+	var rights models.UserRights
+
+	query := `
+		 SELECT 
+			  rights_id,
+			  user_id,
+			  created_rights,
+			  user_bd,
+			  holding,
+			  user_role
+		 FROM rights 
+		 WHERE user_id = $1
+		 LIMIT 1`
+
+	err := q.Get(&rights, query, userID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			log.Printf("Права не найдены для userID: %d", userID)
+			return nil, nil
+		}
+		log.Printf("Ошибка запроса прав: %v", err)
+		return nil, fmt.Errorf("ошибка получения прав: %w", err)
+	}
+
+	log.Printf("Получены права: %+v", rights)
+	return &rights, nil
 }
 
 // func (q *UserQueries) GetUserRightByID(userID uint) (string, error) {
@@ -319,12 +343,12 @@ func (q *UserQueries) SetupUserBd(id uint, user_bd string) error {
 	return nil
 }
 
-// Проверяем является ли User администратором
+// IsAdmin проверяет, является ли пользователь администратором
 func (q *UserQueries) IsAdmin(userID uint) (bool, error) {
 	adminCheckQuery := `
 		 SELECT COUNT(*) > 0
 		 FROM rights 
-		 WHERE user_id = $1 AND user_bd = $1 AND user_role = 'admin'
+		 WHERE user_id = $1 AND user_role = 'admin'
 	`
 
 	var isAdmin bool
@@ -334,4 +358,52 @@ func (q *UserQueries) IsAdmin(userID uint) (bool, error) {
 	}
 
 	return isAdmin, nil
+}
+
+// GetUserHolding проверяет наличие и возвращает значение holding для пользователя
+func (q *UserQueries) GetUserHolding(userID uint) (string, error) {
+	query := `
+		 SELECT holding 
+		 FROM rights 
+		 WHERE user_id = $1
+	`
+
+	var holding string
+	err := q.QueryRow(query, userID).Scan(&holding)
+
+	if err == sql.ErrNoRows {
+		return "", nil // Нет записи - возвращаем пустую строку
+	}
+	if err != nil {
+		return "", fmt.Errorf("ошибка при получении holding: %w", err)
+	}
+
+	return holding, nil
+}
+
+// UpsertUserHolding обновляет или создает запись holding для пользователя
+func (q *UserQueries) UpsertUserHolding(userID uint, holding string) error {
+	query := `
+		 INSERT INTO rights (user_id, holding)
+		 VALUES ($1, $2)
+		 ON CONFLICT (user_id) 
+		 DO UPDATE SET holding = EXCLUDED.holding
+	`
+
+	_, err := q.Exec(query, userID, holding)
+	if err != nil {
+		return fmt.Errorf("ошибка при обновлении holding: %w", err)
+	}
+
+	return nil
+}
+
+func (q *UserQueries) UpdateUserHolding(userID uint, holding string) error {
+	const query = `
+		 UPDATE rights 
+		 SET holding = $1 
+		 WHERE user_id = $2`
+
+	_, err := q.Exec(query, holding, userID)
+	return err
 }

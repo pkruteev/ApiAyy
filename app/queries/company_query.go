@@ -2,6 +2,7 @@ package queries
 
 import (
 	"ApiAyy/app/models"
+	"database/sql"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -10,23 +11,31 @@ type CompanyQueries struct {
 	*sqlx.DB
 }
 
-// GetCompanies method for getting all companies.
+// GetCompanies возвращает список всех компаний
 func (q *CompanyQueries) GetCompanies() ([]models.Company, error) {
-	// Определяем переменную для хранения компаний.
-	companies := []models.Company{}
-
-	// Строка запроса для таблицы companies.
-	query := "SELECT * FROM companies"
-
-	// Используем Select для получения всех строк.
+	var companies []models.Company
+	query := `SELECT * FROM companies ORDER BY company_id`
 	err := q.Select(&companies, query)
-	if err != nil {
-		return nil, err // Возвращаем ошибку, если запрос не удался
-	}
-
-	// Если запрос выполнен успешно, возвращаем список компаний (пустой или нет).
-	return companies, nil
+	return companies, err
 }
+
+// GetCompanies method for getting all companies.
+// func (q *CompanyQueries) GetCompanies() ([]models.Company, error) {
+// 	// Определяем переменную для хранения компаний.
+// 	companies := []models.Company{}
+
+// 	// Строка запроса для таблицы companies.
+// 	query := "SELECT * FROM companies"
+
+// 	// Используем Select для получения всех строк.
+// 	err := q.Select(&companies, query)
+// 	if err != nil {
+// 		return nil, err // Возвращаем ошибку, если запрос не удался
+// 	}
+
+// 	// Если запрос выполнен успешно, возвращаем список компаний (пустой или нет).
+// 	return companies, nil
+// }
 
 // GetCompany method for getting one company by given ID.
 func (q *CompanyQueries) GetCompany() ([]models.Company, error) {
@@ -77,18 +86,30 @@ func (q *CompanyQueries) UpdateCompany(company_id, b *models.Company) error {
 	return nil
 }
 
-// DeleteBook method for delete book by given ID.
-func (q *CompanyQueries) DeleteCompany(company_id int) error {
-	// Define query string.
-	query := `DELETE FROM company WHERE company_id = $1`
+// CompanyExists проверяет существование компании
+func (q *CompanyQueries) CompanyExists(companyID uint) (bool, error) {
+	query := `SELECT EXISTS(SELECT 1 FROM companies WHERE company_id = $1)`
+	var exists bool
+	err := q.Get(&exists, query, companyID)
+	return exists, err
+}
 
-	// Send query to database.
-	_, err := q.Exec(query, company_id)
+// DeleteCompany удаляет компанию по ID
+func (q *CompanyQueries) DeleteCompany(companyID uint) error {
+	query := `DELETE FROM companies WHERE company_id = $1`
+	result, err := q.Exec(query, companyID)
 	if err != nil {
-		// Return only error.
 		return err
 	}
 
-	// This query returns nothing.
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return sql.ErrNoRows
+	}
+
 	return nil
 }

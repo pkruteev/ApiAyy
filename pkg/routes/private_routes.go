@@ -20,6 +20,7 @@ func PrivateRoutes(a *fiber.App) {
 	// Routes for GET method:
 	route.Get("/myusers", middleware.JWTProtected(), controllers.GetMyUsers)
 	route.Get("/companies/:bd", middleware.JWTProtected(), controllers.GetCompanies)
+	route.Get("/objects/:bd", middleware.JWTProtected(), controllers.GetObjects)
 	// route.Get("/companies", middleware.JWTProtected(), controllers.GetCompanies)
 	//route.Get("/companies/:bd", middleware.JWTProtected(), controllers.GetCompanies)
 
@@ -28,5 +29,6 @@ func PrivateRoutes(a *fiber.App) {
 
 	// // Routes for DELETE method:
 	// route.Delete("/book", middleware.JWTProtected(), controllers.DeleteBook)
+	route.Delete("/companies", middleware.JWTProtected(), controllers.DeleteCompanies)
 	route.Delete("/myusers", middleware.JWTProtected(), controllers.DeleteMyUsers)
 }

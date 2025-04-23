@@ -8,6 +8,7 @@ import (
 
 // Queries struct for collect all app queries.
 type Queries struct {
+	*queries.ObjectQueries
 	*queries.UserQueries
 	*queries.CompanyQueries
 	*queries.MyUsersQueries
@@ -32,6 +33,7 @@ func DBConnectionQueries(db_name string) (*Queries, error) {
 	}
 
 	return &Queries{
+		ObjectQueries:  &queries.ObjectQueries{DB: db_main},
 		UserQueries:    &queries.UserQueries{DB: db_main},
 		CompanyQueries: &queries.CompanyQueries{DB: db_main},
 		MyUsersQueries: &queries.MyUsersQueries{DB: db_main},
