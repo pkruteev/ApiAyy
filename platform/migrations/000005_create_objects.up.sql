@@ -14,14 +14,15 @@ CREATE TABLE IF NOT EXISTS public.objects
 (
     object_id       integer NOT NULL DEFAULT nextval('public.objects_object_id_seq'::regclass),
     created_ob      TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    typereal        character varying(55),
-    city            character varying(255),
-    street          character varying(255),
-    house           character varying(55),
+    cadastr_number  character varying(55) NOT NULL,
+    typereal        character varying(55) NOT NULL,
+    city            character varying(255) NOT NULL,
+    street          character varying(255) NOT NULL,
+    house           character varying(55) NOT NULL,
     flat            character varying(55),
-    square          character varying(55),
+    square          character varying(55) NOT NULL,
     floor           character varying(55),
-    company_id      integer, 
+    company_id      integer NOT NULL, 
     CONSTRAINT pk_object_id PRIMARY KEY (object_id),
     CONSTRAINT fk_company_id FOREIGN KEY (company_id) REFERENCES public.companies(company_id) 
 )

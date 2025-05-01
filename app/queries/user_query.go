@@ -282,39 +282,6 @@ func (q *UserQueries) GetUserRights(userID uint) (*models.UserRights, error) {
 // 	return user, nil
 // }
 
-// func (q *UserQueries) GetUserForResponsById(UserID uint) (models.UserType, error) {
-
-// 	user := models.UserType{}
-
-// 	query := "SELECT user_id, bd_used, first_name, patronymic_name, last_name, user_email, user_phone FROM users WHERE user_id = $1"
-
-// 	err := q.Get(&user, query, UserID)
-// 	if err != nil {
-// 		if err == sql.ErrNoRows {
-// 			return user, fmt.Errorf("пользователь с ID %d не найден", UserID)
-// 		}
-// 		return user, err
-// 	}
-
-// 	rightsQuery := "SELECT user_rights FROM rights WHERE user_id = $1"
-
-// 	var userRights string = ""
-
-// 	err = q.Get(&userRights, rightsQuery, UserID)
-
-// 	if err != nil {
-// 		if err == sql.ErrNoRows {
-// 			// Оставляем значение по умолчанию, если права не найдены
-// 		} else {
-// 			return user, err
-// 		}
-// 	} else {
-// 		user.UserRights = userRights
-// 	}
-
-// 	return user, nil
-// }
-
 // Установка значения поля user_bd -
 // бд с которой сейчас работает пользователь
 func (q *UserQueries) SetupUserBd(id uint, user_bd string) error {

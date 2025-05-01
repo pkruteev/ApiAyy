@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS public.contracts
     date_end_rent         DATE,
     object_id             integer,
     company_id            integer,
-    contragent_id         integer, 
+    counterparty_id       integer, 
     rent_pay              character varying(255),
     day_payment_rent      INTEGER CHECK (day_payment_rent BETWEEN 1 AND 31),
     rent_pre_pay          character varying(255),
@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS public.contracts
     CONSTRAINT pkey_contract_id PRIMARY KEY (contract_id),
     CONSTRAINT fk_object_id FOREIGN KEY (object_id) REFERENCES public.objects(object_id),
     CONSTRAINT fk_company_id FOREIGN KEY (company_id) REFERENCES public.companies(company_id),
-    CONSTRAINT fk_contragent_id FOREIGN KEY (contragent_id) REFERENCES public.companies(company_id)
+    CONSTRAINT fk_counterparty_id FOREIGN KEY (counterparty_id) REFERENCES public.companies(company_id)
 )
 TABLESPACE pg_default;
 

@@ -12,6 +12,7 @@ type Queries struct {
 	*queries.UserQueries
 	*queries.CompanyQueries
 	*queries.MyUsersQueries
+	*queries.CounterpartyQueries
 	DB *sqlx.DB
 }
 
@@ -33,9 +34,10 @@ func DBConnectionQueries(db_name string) (*Queries, error) {
 	}
 
 	return &Queries{
-		ObjectQueries:  &queries.ObjectQueries{DB: db_main},
-		UserQueries:    &queries.UserQueries{DB: db_main},
-		CompanyQueries: &queries.CompanyQueries{DB: db_main},
-		MyUsersQueries: &queries.MyUsersQueries{DB: db_main},
+		ObjectQueries:       &queries.ObjectQueries{DB: db_main},
+		UserQueries:         &queries.UserQueries{DB: db_main},
+		CompanyQueries:      &queries.CompanyQueries{DB: db_main},
+		CounterpartyQueries: &queries.CounterpartyQueries{DB: db_main},
+		MyUsersQueries:      &queries.MyUsersQueries{DB: db_main},
 	}, nil
 }

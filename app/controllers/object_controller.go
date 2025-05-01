@@ -246,3 +246,89 @@ func DeleteObjects(c *fiber.Ctx) error {
 
 	return c.Status(fiber.StatusOK).JSON(response)
 }
+
+// Обновление объекта по ID
+func UpdateObject(c *fiber.Ctx) error {
+	// 1. Аутентификация и проверка прав
+	userId, err := ValidateToken(c)
+	if err != nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": true,
+			"msg":   err.Error(),
+		})
+	}
+
+	// 2. Проверяем что пользователь - Администратор
+	dbMain, err := database.DBConnectionQueries("main")
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": true,
+			"msg":   "Ошибка подключения к основной БД: " + err.Error(),
+		})
+	}
+
+	isAdmin, err := dbMain.IsAdmin(userId)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": true,
+			"msg":   "Ошибка проверки прав: " + err.Error(),
+		})
+	}
+
+	if !isAdmin {
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+			"error": true,
+			"msg":   "Недостаточно прав: требуется роль администратора",
+		})
+	}
+
+	// 3. Парсинг входящих данных
+	var request struct {
+		models.Objects
+		BDUsed string `json:"bd_used"`
+	}
+	if err := c.BodyParser(&request); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": true,
+			"msg":   "Неверный формат данных: " + err.Error(),
+		})
+	}
+
+	// 4. Получение ID объекта из URL
+	objectIDStr := c.Params("id")
+	fmt.Printf("Raw object ID from URL: '%s'\n", objectIDStr) // Логируем
+
+	objectID, err := strconv.ParseUint(objectIDStr, 10, 32)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": true,
+			"msg":   "Неверный ID объекта: " + objectIDStr,
+		})
+	}
+
+	// 5. Подключение к БД администратора
+	userIdStr := strconv.FormatUint(uint64(userId), 10)
+	db, err := database.DBConnectionQueries(userIdStr)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": true,
+			"msg":   "Ошибка подключения к БД: " + err.Error(),
+		})
+	}
+
+	// 6. Обновление объекта
+	request.Objects.ObjectId = uint(objectID)
+	if err := db.UpdateObject(request.Objects.ObjectId, &request.Objects); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": true,
+			"msg":   "Ошибка обновления объекта: " + err.Error(),
+		})
+	}
+
+	// 7. Формирование ответа
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"error": false,
+		"msg":   "Объект обновлен успешно",
+		"data":  request.Objects,
+	})
+}

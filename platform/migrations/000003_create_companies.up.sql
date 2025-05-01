@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS public.companies
 (
     company_id       integer NOT NULL DEFAULT nextval('companies_company_id_seq'::regclass),
     create_company   TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    contragent       boolean NOT NULL,
+    is_counterparty  boolean NOT NULL,
     status           character varying(55) NOT NULL,
     name             character varying(255) NOT NULL,
     inn              character varying(55) NOT NULL,

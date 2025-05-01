@@ -10,7 +10,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-// GetCompanies возвращает список всех компаний из указанной базы данных.
+// GetCompanies возвращает список всех компаний (counterparty: false)
 func GetCompanies(c *fiber.Ctx) error {
 	// Получаем имя базы данных из параметра запроса
 	bd := c.Params("bd")
@@ -95,6 +95,7 @@ func AddCompany(c *fiber.Ctx) error {
 		models.Company
 		BDUsed string `json:"bd_used"`
 	}
+
 	if err := c.BodyParser(&request); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": true,
@@ -280,4 +281,90 @@ func DeleteCompanies(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusOK).JSON(response)
+}
+
+// Обновление по ID
+func UpdateCompany(c *fiber.Ctx) error {
+	// 1. Аутентификация и проверка прав
+	userId, err := ValidateToken(c)
+	if err != nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": true,
+			"msg":   err.Error(),
+		})
+	}
+
+	// 2. Проверяем что пользователь - Администратор
+	dbMain, err := database.DBConnectionQueries("main")
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": true,
+			"msg":   "Ошибка подключения к основной БД: " + err.Error(),
+		})
+	}
+
+	isAdmin, err := dbMain.IsAdmin(userId)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": true,
+			"msg":   "Ошибка проверки прав: " + err.Error(),
+		})
+	}
+
+	if !isAdmin {
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+			"error": true,
+			"msg":   "Недостаточно прав: требуется роль администратора",
+		})
+	}
+
+	// 3. Парсинг входящих данных
+	var request struct {
+		models.Company
+		BDUsed string `json:"bd_used"`
+	}
+	if err := c.BodyParser(&request); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": true,
+			"msg":   "Неверный формат данных: " + err.Error(),
+		})
+	}
+
+	// 4. Получение ID компании из URL
+	companyIDStr := c.Params("id")
+	fmt.Printf("Raw company ID from URL: '%s'\n", companyIDStr) // Логируем
+
+	companyID, err := strconv.ParseUint(companyIDStr, 10, 32)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": true,
+			"msg":   "Неверный ID компании: " + companyIDStr,
+		})
+	}
+
+	// 5. Подключение к БД администратора
+	userIdStr := strconv.FormatUint(uint64(userId), 10)
+	db, err := database.DBConnectionQueries(userIdStr)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": true,
+			"msg":   "Ошибка подключения к БД: " + err.Error(),
+		})
+	}
+
+	// 6. Обновление компании
+	request.Company.CompanyId = uint(companyID)
+	if err := db.UpdateCompany(request.Company.CompanyId, &request.Company); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": true,
+			"msg":   "Ошибка обновления компании: " + err.Error(),
+		})
+	}
+
+	// 7. Формирование ответа
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"error": false,
+		"msg":   "Компания обновлена успешно",
+		"data":  request.Company,
+	})
 }
