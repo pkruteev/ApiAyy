@@ -17,10 +17,10 @@ CREATE TABLE IF NOT EXISTS public.r_schets
     bank_name        character varying(255),
     bank_bic         character varying(55),
     kor_schet        character varying(55),
-    company_id       integer, 
+    company_id       integer NOT NULL,
     CONSTRAINT r_schets_id PRIMARY KEY (r_schet_id),
-    CONSTRAINT fk_company_id FOREIGN KEY (company_id) REFERENCES public.companies(company_id) 
-)
+     CONSTRAINT fk_company_id FOREIGN KEY (company_id) REFERENCES public.companies(company_id)
+    )
 TABLESPACE pg_default;
 
 ALTER TABLE public.r_schets
